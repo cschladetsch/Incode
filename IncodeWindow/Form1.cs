@@ -1,30 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using KeyMouse;
 using MouseKeyboardActivityMonitor;
 using MouseKeyboardActivityMonitor.WinApi;
 using WindowsInput;
 
-namespace KeyMouse
+namespace IncodeWindow
 {
+	/// <summary>
+	/// Yeah, this should be a service, or at least an app that minimises to the system tray.
+	/// </summary>
 	public partial class Form1 : Form
 	{
-		private readonly KeyboardHookListener keyboard;
-		private readonly MouseHookListener mouse;
-		private readonly InputSimulator inputSimulator;
-		private bool control; // true while the control key is down
+		private KeyboardHookListener keyboardIn;
+		private MouseHookListener mouseIn;
+		private InputSimulator inputSimulator;
 
+		private bool controlled; // true while we control all input and output
 		private const float Frequency = 100.0f; // Hertz
-		private readonly Timer timer;
-		private float tx, ty;
+
+		private Timer timer;
+		private float tx, ty; // the target mouse position
+
+		private LowPass mx = new LowPass(Frequency, 1000, 2); // the filtered mouse position
+		private LowPass my = new LowPass(Frequency, 1000, 2);
+
+		private IMouseSimulator mouseOut;
+		private IKeyboardSimulator keyboardOut;
 
 		[Flags]
 		enum Command
@@ -35,14 +40,15 @@ namespace KeyMouse
 			LeftClick, RightClick, LeftDown, RightDown,
 		}
 
-		private LowPass mx = new LowPass(Frequency, 1000, 2);
-		private LowPass my = new LowPass(Frequency, 1000, 2);
-
+		// TODO: expose these to UI
 		public float Speed = 250;
 		public float Accel = 11;
 		public float ScrollScale = 0.7f;
 		public float ScrollAccel = 1.15f; // amount of scroll events to make per second
 
+		/// <summary>
+		/// A pending thing to do - also used to map keys to actions
+		/// </summary>
 		class Action
 		{
 			public readonly Command Command;
@@ -58,10 +64,21 @@ namespace KeyMouse
 
 		private readonly Stopwatch watch = new Stopwatch();
 
+		// the key to press to activate the custom mode
+		// works well for WASD 88-key blank keyboards ;)
+		private const Keys overrideKey = Keys.OemBackslash; 
+
 		public Form1()
 		{
 			InitializeComponent();
 
+			Configure();
+
+			InstallHooks();
+		}
+
+		private void Configure()
+		{
 			keys.Add(Keys.E, new Action(Command.Up));
 			keys.Add(Keys.S, new Action(Command.Left));
 			keys.Add(Keys.D, new Action(Command.Down));
@@ -70,36 +87,43 @@ namespace KeyMouse
 			keys.Add(Keys.W, new Action(Command.ScrollUp));
 			keys.Add(Keys.R, new Action(Command.ScrollDown));
 
+			keys.Add(Keys.Space, new Action(Command.LeftDown));
+		}
+
+		private void InstallHooks()
+		{
 			inputSimulator = new InputSimulator();
 
-			mouse = new MouseHookListener(new GlobalHooker()) { Enabled = true };
-			keyboard = new KeyboardHookListener(new GlobalHooker()) { Enabled = true };
+			mouseOut = inputSimulator.Mouse;
+			keyboardOut = inputSimulator.Keyboard;
 
-			keyboard.KeyDown += OnKeyDown;
-			keyboard.KeyUp += OnKeyUp;
+			mouseIn = new MouseHookListener(new GlobalHooker()) {Enabled = true};
+			keyboardIn = new KeyboardHookListener(new GlobalHooker()) {Enabled = true};
 
-			// timer to move the mouse
-			timer = new Timer { Enabled = true, Interval = (int)(1000/Frequency) };
-			timer.Tick += MoveMouse;
+			keyboardIn.KeyDown += OnKeyDown;
+			keyboardIn.KeyUp += OnKeyUp;
 
-			timer.Enabled = false;
+			timer = new Timer {Interval = (int) (1000/Frequency)};
+			timer.Tick += PerformCommands;
+
 			watch.Start();
 		}
 
-		private void MoveMouse(object sender, EventArgs e)
+		private void PerformCommands(object sender, EventArgs e)
 		{
 			var dt = watch.ElapsedMilliseconds/1000.0f;
 			watch.Restart();
 
 			var now = DateTime.Now;
 			var earliest = DateTime.MaxValue;
+
+			// only used for cursor-movement keys
 			foreach (var action in keys)
 			{
 				var act = action.Value;
-				if (act.Started > DateTime.MinValue && act.Started < earliest)
+				if (act.Started > DateTime.MinValue && act.Started < earliest && act.Command != Command.LeftDown)
 					earliest = act.Started;
 			}
-
 			var millis = (float)(now - earliest).TotalMilliseconds;
 			var scale = Accel * millis / 1000.0f;
 			var delta = dt * Speed * scale;
@@ -131,14 +155,14 @@ namespace KeyMouse
 						var ts = (now - act.Started).TotalSeconds;
 						var accel = ScrollAccel*ts;
 						var t = (int)(ts*accel*ScrollScale);
-						inputSimulator.Mouse.VerticalScroll(t);
+						mouseOut.VerticalScroll(t);
 						break;
 
 					case Command.ScrollDown:
 						var ts2 = (now - act.Started).TotalSeconds;
 						var accel2 = ScrollAccel*ts2;
 						var t2 = (int)(ts2*accel2*ScrollScale);
-						inputSimulator.Mouse.VerticalScroll(t2);
+						mouseOut.VerticalScroll(t2);
 						break;
 				}
 			}
@@ -156,112 +180,100 @@ namespace KeyMouse
 
 		private void OnKeyDown(object sender, KeyEventArgs e)
 		{
-			if (!control && e.KeyCode == Keys.OemBackslash)
+			if (!controlled)
 			{
-				var pos = Cursor.Position;
-				tx = pos.X;
-				ty = pos.Y;
-
-				mx.Set(tx);
-				my.Set(ty);
-
-				//Debug.WriteLine("going to {0} {1}", tx, ty);
-				
-				control = true;
-				timer.Enabled = true;
-				e.Handled = true;
-				e.SuppressKeyPress = true;
+				if (e.KeyCode == overrideKey)
+				{
+					Eat(e);
+					StartControl();
+				}
 				return;
 			}
 
-			if (!control)
-				return; 
+			if (!keys.ContainsKey(e.KeyCode))
+				return;
 
-			var eat = false;
-			if (keys.ContainsKey(e.KeyCode))
-			{
-				eat = true;
+			Eat(e);
 
-				// we get key-down events as repeats - only set it the first time we get a keydown
-				var action = keys[e.KeyCode];
-				if (action.Started == DateTime.MinValue)
-					action.Started = DateTime.Now;
-			}
+			// we get key-down events as repeats - only set it the first time we get a key-down
+			var action = keys[e.KeyCode];
+			if (action.Started == DateTime.MinValue)
+				action.Started = DateTime.Now;
 			
+			// TODO: this is a shitty hack and I need more or less scotch
 			switch (e.KeyCode)
 			{
 				case Keys.W:
-					eat = true;
-					inputSimulator.Mouse.VerticalScroll(1);
+					mouseOut.VerticalScroll(1);
 					break;
 				case Keys.R:
-					eat = true;
-					inputSimulator.Mouse.VerticalScroll(-1);
+					mouseOut.VerticalScroll(-1);
 					break;
-				//case Keys.F:
-				//	inputSimulator.Mouse.LeftButtonClick();
-				//	break;
-				//case Keys.G:
-				//	inputSimulator.Mouse.RightButtonClick();
-				//	break;
 				case Keys.Space:
-					eat = true;
-					inputSimulator.Mouse.LeftButtonDown();
+					mouseOut.LeftButtonDown();
 					break;
-				//case Keys.LShiftKey:
-				//	inputSimulator.Mouse.LeftButtonClick();
-				//	break;
-				//case Keys.LMenu:
-				//	inputSimulator.Mouse.RightButtonClick();
-				//	break;
 			}
-fini:
-			if (eat)
-			{
-				e.Handled = true;
-				e.SuppressKeyPress = true;
-			}
+		}
+
+		private static void Eat(KeyEventArgs e)
+		{
+			e.Handled = true;
+			e.SuppressKeyPress = true;
+		}
+
+		private void StartControl()
+		{
+			var pos = Cursor.Position;
+			tx = pos.X;
+			ty = pos.Y;
+
+			mx.Set(tx);
+			my.Set(ty);
+
+			controlled = true;
+			timer.Enabled = true;
 		}
 
 		private void OnKeyUp(object sender, KeyEventArgs e)
 		{
-			if (e.KeyCode == Keys.OemBackslash)
+			if (!controlled)
+				return;
+
+			if (e.KeyCode == overrideKey)
 			{
-				control = false;
-				timer.Enabled = false;
-				e.Handled = true;
-				e.SuppressKeyPress = true;
-				// not needed, maybe, but it seems best to do this.
-				// one scenario is that the user presses control, then the space (to simulate
-				// a mouse down), then releases control, then space, resulting in a state where
-				// the system believes it has a left button down but there is not.
-				inputSimulator.Mouse.LeftButtonUp();
+				Eat(e);
+				LeaveControl();
 				return;
 			}
 
-			if (!control)
+			if (!keys.ContainsKey(e.KeyCode))
 				return;
 
-			var eat = false;
+			Eat(e);
 
-			if (keys.ContainsKey(e.KeyCode))
-			{
-				eat = true;
-				keys[e.KeyCode].Started = DateTime.MinValue;
-			}
+			// sentinel values are bad. I use one here to indicate that an action is not active.
+			keys[e.KeyCode].Started = DateTime.MinValue;
+
+			// kill me
 			switch (e.KeyCode)
 			{
 				case Keys.Space:
-					eat = true;
-					inputSimulator.Mouse.LeftButtonUp();
+					mouseOut.LeftButtonUp();
 					break;
 			}
+		}
 
-			if (eat)
-			{
-				e.Handled = true;
-				e.SuppressKeyPress = true;
-			}
+		private void LeaveControl()
+		{
+			controlled = false;
+			timer.Enabled = false;
+
+			// not needed, maybe, but it seems best to do this.
+			// one scenario is that the user presses control, then the space (to simulate
+			// a mouse down), then releases control, then space, resulting in a state where
+			// the system believes it has a left button down but there is not.
+			mouseOut.LeftButtonUp();
+			mouseOut.RightButtonUp();
 		}
 	}
 }

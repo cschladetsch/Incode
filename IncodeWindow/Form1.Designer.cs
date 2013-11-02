@@ -1,4 +1,4 @@
-﻿namespace KeyMouse
+﻿namespace IncodeWindow
 {
 	partial class Form1
 	{
