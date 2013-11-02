@@ -40,7 +40,8 @@ namespace KeyMouse
 
 		public float Speed = 250;
 		public float Accel = 11;
-		public float ScrollScale = 2; // amount of scroll events to make per second
+		public float ScrollScale = 0.7f;
+		public float ScrollAccel = 1.15f; // amount of scroll events to make per second
 
 		class Action
 		{
@@ -61,12 +62,13 @@ namespace KeyMouse
 		{
 			InitializeComponent();
 
-			keys.Add(Keys.W, new Action(Command.Up));
-			keys.Add(Keys.A, new Action(Command.Left));
-			keys.Add(Keys.S, new Action(Command.Down));
-			keys.Add(Keys.D, new Action(Command.Right));
-			keys.Add(Keys.R, new Action(Command.ScrollUp));
-			keys.Add(Keys.F, new Action(Command.ScrollDown));
+			keys.Add(Keys.E, new Action(Command.Up));
+			keys.Add(Keys.S, new Action(Command.Left));
+			keys.Add(Keys.D, new Action(Command.Down));
+			keys.Add(Keys.F, new Action(Command.Right));
+
+			keys.Add(Keys.W, new Action(Command.ScrollUp));
+			keys.Add(Keys.R, new Action(Command.ScrollDown));
 
 			inputSimulator = new InputSimulator();
 
@@ -75,9 +77,6 @@ namespace KeyMouse
 
 			keyboard.KeyDown += OnKeyDown;
 			keyboard.KeyUp += OnKeyUp;
-
-			screenWidth = Screen.PrimaryScreen.Bounds.Width;
-			screenHeight = Screen.PrimaryScreen.Bounds.Height;
 
 			// timer to move the mouse
 			timer = new Timer { Enabled = true, Interval = (int)(1000/Frequency) };
@@ -129,14 +128,17 @@ namespace KeyMouse
 						break;
 
 					case Command.ScrollUp:
-						var t = (int)((now - act.Started).TotalSeconds * ScrollScale);
-						Debug.WriteLine(t);
+						var ts = (now - act.Started).TotalSeconds;
+						var accel = ScrollAccel*ts;
+						var t = (int)(ts*accel*ScrollScale);
 						inputSimulator.Mouse.VerticalScroll(t);
 						break;
 
 					case Command.ScrollDown:
-						var s = (int)((now - act.Started).TotalSeconds * ScrollScale);
-						inputSimulator.Mouse.VerticalScroll(-s);
+						var ts2 = (now - act.Started).TotalSeconds;
+						var accel2 = ScrollAccel*ts2;
+						var t2 = (int)(ts2*accel2*ScrollScale);
+						inputSimulator.Mouse.VerticalScroll(t2);
 						break;
 				}
 			}
@@ -154,13 +156,21 @@ namespace KeyMouse
 
 		private void OnKeyDown(object sender, KeyEventArgs e)
 		{
-			if (e.KeyCode == Keys.OemBackslash)
+			if (!control && e.KeyCode == Keys.OemBackslash)
 			{
-				var pos = System.Windows.Forms.Cursor.Position;
+				var pos = Cursor.Position;
 				tx = pos.X;
 				ty = pos.Y;
+
+				mx.Set(tx);
+				my.Set(ty);
+
+				//Debug.WriteLine("going to {0} {1}", tx, ty);
+				
 				control = true;
 				timer.Enabled = true;
+				e.Handled = true;
+				e.SuppressKeyPress = true;
 				return;
 			}
 
@@ -176,27 +186,26 @@ namespace KeyMouse
 				var action = keys[e.KeyCode];
 				if (action.Started == DateTime.MinValue)
 					action.Started = DateTime.Now;
-
-				//// dirty 2am hack. need to normalise actions
-				//if (action.Command == Command.ScrollDown || action.Command == Command.ScrollUp)
-				//	goto fini;
 			}
 			
 			switch (e.KeyCode)
 			{
-				//case Keys.R:
-				//	inputSimulator.Mouse.VerticalScroll(1);
-				//	break;
+				case Keys.W:
+					eat = true;
+					inputSimulator.Mouse.VerticalScroll(1);
+					break;
+				case Keys.R:
+					eat = true;
+					inputSimulator.Mouse.VerticalScroll(-1);
+					break;
 				//case Keys.F:
-				//	inputSimulator.Mouse.VerticalScroll(-1);
+				//	inputSimulator.Mouse.LeftButtonClick();
 				//	break;
-				case Keys.F:
-					inputSimulator.Mouse.LeftButtonClick();
-					break;
-				case Keys.G:
-					inputSimulator.Mouse.RightButtonClick();
-					break;
+				//case Keys.G:
+				//	inputSimulator.Mouse.RightButtonClick();
+				//	break;
 				case Keys.Space:
+					eat = true;
 					inputSimulator.Mouse.LeftButtonDown();
 					break;
 				//case Keys.LShiftKey:
@@ -219,9 +228,14 @@ fini:
 			if (e.KeyCode == Keys.OemBackslash)
 			{
 				control = false;
-				zoomLevel = 0;
 				timer.Enabled = false;
-				rect = new Rectangle(0, 0, screenWidth, screenHeight);
+				e.Handled = true;
+				e.SuppressKeyPress = true;
+				// not needed, maybe, but it seems best to do this.
+				// one scenario is that the user presses control, then the space (to simulate
+				// a mouse down), then releases control, then space, resulting in a state where
+				// the system believes it has a left button down but there is not.
+				inputSimulator.Mouse.LeftButtonUp();
 				return;
 			}
 
@@ -238,6 +252,7 @@ fini:
 			switch (e.KeyCode)
 			{
 				case Keys.Space:
+					eat = true;
 					inputSimulator.Mouse.LeftButtonUp();
 					break;
 			}
@@ -248,122 +263,5 @@ fini:
 				e.SuppressKeyPress = true;
 			}
 		}
-
-		enum Row
-		{
-			Top, Mid, Bottom
-		}
-
-		enum Column
-		{
-			Left, Mid, Right
-		}
-
-		private void OnKeyDown2(object sender, KeyEventArgs e)
-		{
-			if (e.KeyCode == Keys.RControlKey)
-			{
-				control = true;
-				return;
-			}
-
-			if (!control)
-				return;
-
-			var eat = false;
-			switch (e.KeyCode)
-			{
-				case Keys.Q:
-					eat = true;
-					MoveMouseCursor(Row.Top, Column.Left);
-					break;
-				case Keys.W:
-					eat = true;
-					MoveMouseCursor(Row.Top, Column.Mid);
-					break;
-				case Keys.E:
-					eat = true;
-					MoveMouseCursor(Row.Top, Column.Right);
-					break;
-				case Keys.A:
-					eat = true;
-					MoveMouseCursor(Row.Mid, Column.Left);
-					break;
-				case Keys.S:
-					eat = true;
-					MoveMouseCursor(Row.Mid, Column.Mid);
-					break;
-				case Keys.D:
-					eat = true;
-					MoveMouseCursor(Row.Mid, Column.Right);
-					break;
-				case Keys.Z:
-					eat = true;
-					MoveMouseCursor(Row.Bottom, Column.Left);
-					break;
-				case Keys.X:
-					eat = true;
-					MoveMouseCursor(Row.Bottom, Column.Mid);
-					break;
-				case Keys.C:
-					eat = true;
-					MoveMouseCursor(Row.Bottom, Column.Right);
-					break;
-
-				case Keys.LControlKey:
-					inputSimulator.Mouse.LeftButtonClick();
-					break;
-				case Keys.LWin:
-					inputSimulator.Mouse.RightButtonClick();
-					break;
-			}
-
-			if (eat)
-			{
-				e.Handled = true;
-				e.SuppressKeyPress = true;
-			}
-		}
-
-		private int zoomLevel = 0;
-		private Rectangle rect = new Rectangle();
-		private int screenWidth, screenHeight;
-
-		private void MoveMouseCursor(Row row, Column column)
-		{
-			zoomLevel++;
-
-			var div = zoomLevel*3;
-			rect.Width = screenWidth/div;
-			rect.Height = screenHeight/div;
-
-			switch (row)
-			{
-				case Row.Top:
-					break;
-				case Row.Mid:
-					rect.Y += rect.Height;
-					break;
-				case Row.Bottom:
-					rect.Y += rect.Height*2;
-					break;
-			}
-			switch (column)
-			{
-				case Column.Left:
-					break;
-				case Column.Mid:
-					rect.X += rect.Width;
-					break;
-				case Column.Right:
-					rect.X += rect.Width*2;
-					break;
-			}
-
-			SetCursorPos(rect.X + rect.Width/2, rect.Y + rect.Height/2);
-		}
-
-		[DllImport("user32")]
-		internal static extern int SetCursorPos(int x, int y);
 	}
 }
