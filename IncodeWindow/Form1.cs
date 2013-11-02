@@ -17,7 +17,10 @@ namespace IncodeWindow
 	{
 		private KeyboardHookListener keyboardIn;
 		private MouseHookListener mouseIn;
+		
 		private InputSimulator inputSimulator;
+		private IMouseSimulator mouseOut;
+		private IKeyboardSimulator keyboardOut;
 
 		private bool controlled; // true while we control all input and output
 		private const float Frequency = 100.0f; // Hertz
@@ -27,9 +30,6 @@ namespace IncodeWindow
 
 		private LowPass mx = new LowPass(Frequency, 1000, 2); // the filtered mouse position
 		private LowPass my = new LowPass(Frequency, 1000, 2);
-
-		private IMouseSimulator mouseOut;
-		private IKeyboardSimulator keyboardOut;
 
 		[Flags]
 		enum Command
@@ -273,7 +273,8 @@ namespace IncodeWindow
 			// a mouse down), then releases control, then space, resulting in a state where
 			// the system believes it has a left button down but there is not.
 			mouseOut.LeftButtonUp();
-			mouseOut.RightButtonUp();
+
+			//mouseOut.RightButtonUp();
 		}
 	}
 }
