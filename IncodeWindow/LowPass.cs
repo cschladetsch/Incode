@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace KeyMouse
+namespace IncodeWindow
 {
 	internal class LowPass
 	{
