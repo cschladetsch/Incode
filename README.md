@@ -4,7 +4,7 @@ Incode
 Custom input system for keyboard and mouse for Windows.
 
 This application allows the user to control the mouse and other systems such as cursor and scrolling
-using a minimal set of keys.
+using a minimal set of keys. At worst, it is a great replacement for the Microsoft "MouseKeys" system.
 
 Hold an 'Override' button - in my case on a 88-Key WASD keyboard, it's the Amiga-like second backslash key beside the
 left shift key - and then use the rest of the keyboard to send custom input.
@@ -16,7 +16,7 @@ W and R keys send scroll up and down, again with a custom filter and timings.
 
 The space bar simulates the left mouse button, and 'g' the right. 'v' sends enter, and there are many others.
 
-There are many other ins and outs. This is not meant to be a system for a typical user. It's very hard-coded to
+This is not meant to be a system for a typical user. It's very hard-coded to
 me and my setup (custom WASD keyboard, logitech touchpad, vi, no mouse).
 
 That said, it is readily customisable if you can read C#. I haven't made it generic because I wrote it for me. 
