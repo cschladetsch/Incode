@@ -34,6 +34,7 @@ namespace IncodeWindow
 		enum Command
 		{
 			Up = 1, Down = 2, Left = 4, Right = 8,
+            CursorLeft, CursorRight, CursorUp, CursorDown,
 
 			ScrollUp, ScrollDown,
 			LeftClick, RightClick, LeftDown, RightDown,
@@ -85,8 +86,14 @@ namespace IncodeWindow
 			_keys.Add(Keys.D, new Action(Command.Down));
 			_keys.Add(Keys.F, new Action(Command.Right));
 
-			_keys.Add(Keys.W, new Action(Command.ScrollUp));
-			_keys.Add(Keys.R, new Action(Command.ScrollDown));
+			_keys.Add(Keys.R, new Action(Command.ScrollUp));
+			_keys.Add(Keys.V, new Action(Command.ScrollDown));
+
+            //_keys.Add(Keys.H, new Action(Command.CursorLeft));
+            //_keys.Add(Keys.J, new Action(Command.CursorDown));
+            //_keys.Add(Keys.K, new Action(Command.CursorUp));
+            //_keys.Add(Keys.L, new Action(Command.CursorRight));
+
 
 			_keys.Add(Keys.Space, new Action(Command.LeftDown));
 		}
@@ -162,6 +169,20 @@ namespace IncodeWindow
 					case Command.ScrollDown:
 						_mouseOut.VerticalScroll(-t);
 						break;
+
+                    case Command.CursorLeft:
+                        _keyboardOut.KeyDown(WindowsInput.Native.VirtualKeyCode.LEFT);
+                        Console.WriteLine("Left");
+                        break;
+                    case Command.CursorDown:
+                        _keyboardOut.KeyDown(WindowsInput.Native.VirtualKeyCode.DOWN);
+                        break;
+                    case Command.CursorUp:
+                        _keyboardOut.KeyDown(WindowsInput.Native.VirtualKeyCode.UP);
+                        break;
+                    case Command.CursorRight:
+                        _keyboardOut.KeyDown(WindowsInput.Native.VirtualKeyCode.RIGHT);
+                        break;
 				}
 			}
 
@@ -204,11 +225,14 @@ namespace IncodeWindow
 			// TODO: this is a shitty hack and I need more or less scotch
 			switch (e.KeyCode)
 			{
-				case Keys.W:
+				case Keys.R:
 					_mouseOut.VerticalScroll(1);
 					break;
-				case Keys.R:
+				case Keys.V:
 					_mouseOut.VerticalScroll(-1);
+					break;
+				case Keys.C:
+					_mouseOut.RightButtonDown();
 					break;
 				case Keys.Space:
 					_mouseOut.LeftButtonDown();
