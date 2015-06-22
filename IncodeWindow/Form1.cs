@@ -1,4 +1,6 @@
-﻿using System;
+﻿// (C) 2015 christian.schladetsch@gmail.com
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -97,9 +99,8 @@ namespace IncodeWindow
 
 			_keys.Add(Keys.Space, new Action(Command.LeftDown));
 
-            _abbreviations.Add(new List<Keys>() { Keys.G, Keys.M }, "christian.schladetsch@gmail.com");
-            _abbreviations.Add(new List<Keys>() { Keys.P, Keys.A }, "17 Leonard St, Heidleberg Heights, VIC, 3081");
-            _abbreviations.Add(new List<Keys>() { Keys.P, Keys.P }, "0416615748");
+            _abbreviations.Add("christian.schladetsch@gmail.com",               new List<Keys>() { Keys.G, Keys.M });
+
 		}
 
 		private void InstallHooks()
@@ -124,7 +125,7 @@ namespace IncodeWindow
         bool _firstDown;
         DateTime _firstDownTime;
         bool _abbrMode;
-        Dictionary<List<Keys>, string> _abbreviations = new Dictionary<List<Keys>, string>();
+        Dictionary<string, List<Keys>> _abbreviations = new Dictionary<string, List<Keys>>();
         List<Keys> _abbreviation = new List<Keys>();
 
 		private void PerformCommands(object sender, EventArgs e)
@@ -211,7 +212,7 @@ namespace IncodeWindow
 
 		private void OnKeyDown(object sender, KeyEventArgs e)
         {
-            Debug.WriteLine("_inserting = " + _inserting);
+            ////Debug.WriteLine("_inserting = " + _inserting);
 
             if (_inserting > 0)
             {
@@ -307,54 +308,49 @@ namespace IncodeWindow
             return 1;
         }
 
-        int count;
-        int count2;
-
         private bool CheckCompleteAbbreviation(KeyEventArgs e)
         {
             if (!_abbrMode)
                 return false;
 
-            Debug.WriteLine("Adding {0} to abb", e.KeyCode);
+            //Debug.WriteLine("Adding {0} to abbreviation", e.KeyCode);
 
             _abbreviation.Add(e.KeyCode);
-            Debug.WriteLine(count2++);
+            ////Debug.WriteLine(count2++);
 
             // check for an abbreviation being completed
             foreach (var kv in _abbreviations)
             {
-                Debug.WriteLine(count++);
-                //Debug.WriteLine("Testing for " + kv.Value + " " + _abbreviations.Count);
+                ////Debug.WriteLine(count++);
+                //Debug.WriteLine("Testing for " + kv.Key + " " + _abbreviations.Count);
 
                 Eat(e);
 
-                var test = StartsWith(kv.Key, _abbreviation);
+                var test = StartsWith(kv.Value, _abbreviation);
                 switch (test)
                 {
                     case -1:
-                        Debug.WriteLine("Prefix doesn't match, eating");
-                        _abbreviation.Clear();
+                        //Debug.WriteLine("Prefix doesn't match, eating");
+                        //_abbreviation.Clear();
                         // TODO: Beep
-                        return false;
+                        continue;
 
                     case 0:
-                        Debug.WriteLine("Prefix matches so far, eating");
-                        return false;
+                        //Debug.WriteLine("Prefix matches so far, eating");
+                        return true;
 
                     case 1: 
-                        Debug.WriteLine("Inserted: " + kv.Value);
-                        Debug.WriteLine("{0} {1} ", count, count2);
-                        _inserting = kv.Value.Length;
+                        //Debug.WriteLine("Inserted: " + kv.Value);
+                        //Debug.WriteLine("{0} {1} ", count, count2);
+                        _inserting = kv.Key.Length;
 
-                        _keyboardOut.TextEntry(kv.Value);
+                        _keyboardOut.TextEntry(kv.Key);
                         //System.Windows.Forms.SendKeys.Send(kv.Value);
                         //System.Windows.Forms.SendKeys.Flush();
 
                         _firstDown = false;
                         _abbrMode = false;
                         _abbreviation.Clear();
-
-
 
                         return true;
                 }
@@ -384,7 +380,7 @@ namespace IncodeWindow
             {
                 _firstDown = true;
                 _firstDownTime = now;
-                Debug.WriteLine("First down");
+                //Debug.WriteLine("First down");
                 return false;
             }
             
@@ -394,14 +390,14 @@ namespace IncodeWindow
             {
                 _firstDown = false;
                 _abbrMode = false;
-                Debug.WriteLine("Too long!");
+                //Debug.WriteLine("Too long!");
                 return false;
             }
 
             _firstDown = false;
             _abbrMode = true;
 
-            Debug.WriteLine("Entering abbreviation mode");
+            //Debug.WriteLine("Entering abbreviation mode");
 
             return true;
         }
