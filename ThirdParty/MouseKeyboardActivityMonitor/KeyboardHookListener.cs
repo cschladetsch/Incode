@@ -33,6 +33,9 @@ namespace MouseKeyboardActivityMonitor
         protected override bool ProcessCallback(int wParam, IntPtr lParam)
         {
             KeyEventArgsExt e = KeyEventArgsExt.FromRawData(wParam, lParam, IsGlobal);
+            
+            if (e.Handled || e.SuppressKeyPress)
+                return false;
 
             InvokeKeyDown(e);
             InvokeKeyPress(wParam, lParam);

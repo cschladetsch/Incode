@@ -98,6 +98,8 @@ namespace IncodeWindow
 			_keys.Add(Keys.Space, new Action(Command.LeftDown));
 
             _abbreviations.Add(new List<Keys>() { Keys.G, Keys.M }, "christian.schladetsch@gmail.com");
+            _abbreviations.Add(new List<Keys>() { Keys.P, Keys.A }, "17 Leonard St, Heidleberg Heights, VIC, 3081");
+            _abbreviations.Add(new List<Keys>() { Keys.P, Keys.P }, "0416615748");
 		}
 
 		private void InstallHooks()
@@ -209,17 +211,28 @@ namespace IncodeWindow
 
 		private void OnKeyDown(object sender, KeyEventArgs e)
         {
+            Debug.WriteLine("_inserting = " + _inserting);
+
+            if (_inserting > 0)
+            {
+                _inserting--;
+                //e.Handled = true;
+                //e.SuppressKeyPress = true;
+                return;
+            }
+
             // if we're in the middle of an abbreviation, stop it
             if (e.KeyCode == Keys.Escape && _abbrMode)
             {
                 _abbrMode = false;
+                _abbreviation.Clear();
                 Eat(e);
                 return;
             }
 
             if (CheckCompleteAbbreviation(e))
             {
-                Eat(e);
+                //Eat(e);
                 return;
             }
 
@@ -275,63 +288,82 @@ namespace IncodeWindow
         /// <typeparam name="T"></typeparam>
         /// <param name="list"></param>
         /// <param name="prefix"></param>
-        /// <returns>-1 if prefix is too short, 0 if prefix matches, 1 if list are identical</returns>
+        /// <returns>-1 if prefix doesn't match, 0 if prefix matches, 1 if prefix matches</returns>
         int StartsWith<T>(List<T> list, List<T> prefix) where T : IComparable
         {
+            if (prefix.Count == 0)
+                return -1;
+
             var n = 0;
             foreach (var a in list)
             {
                 if (n >= prefix.Count)
-                    return -1;
+                    return 0;
 
                 if (!prefix[n++].Equals(a))
-                    return 0;
+                    return -1;
             }
+
             return 1;
         }
+
+        int count;
+        int count2;
 
         private bool CheckCompleteAbbreviation(KeyEventArgs e)
         {
             if (!_abbrMode)
                 return false;
 
+            Debug.WriteLine("Adding {0} to abb", e.KeyCode);
+
             _abbreviation.Add(e.KeyCode);
+            Debug.WriteLine(count2++);
 
             // check for an abbreviation being completed
             foreach (var kv in _abbreviations)
             {
+                Debug.WriteLine(count++);
+                //Debug.WriteLine("Testing for " + kv.Value + " " + _abbreviations.Count);
 
-                Debug.WriteLine("Testing for " + kv.Value);
+                Eat(e);
 
                 var test = StartsWith(kv.Key, _abbreviation);
                 switch (test)
                 {
-                    case 0:
+                    case -1:
                         Debug.WriteLine("Prefix doesn't match, eating");
-                        Eat(e);
+                        _abbreviation.Clear();
                         // TODO: Beep
                         return false;
-                    case 1:
+
+                    case 0:
                         Debug.WriteLine("Prefix matches so far, eating");
-                        Eat(e);
+                        return false;
+
+                    case 1: 
+                        Debug.WriteLine("Inserted: " + kv.Value);
+                        Debug.WriteLine("{0} {1} ", count, count2);
+                        _inserting = kv.Value.Length;
+
+                        _keyboardOut.TextEntry(kv.Value);
+                        //System.Windows.Forms.SendKeys.Send(kv.Value);
+                        //System.Windows.Forms.SendKeys.Flush();
+
+                        _firstDown = false;
+                        _abbrMode = false;
+                        _abbreviation.Clear();
+
+
+
                         return true;
-                    case 2:
-                        Eat(e);
-                        break;
-
                 }
-
-
-                _keyboardOut.TextEntry(kv.Value);
-                _firstDown = false;
-                _abbrMode = false;
-                _abbreviation.Clear();
-
-                Debug.WriteLine("Inserted: " + kv.Value);
             }
 
             return false;
         }
+
+        int _inserting;
 
         /// <summary>
         /// Return true if we have just entered abbreviation mode
