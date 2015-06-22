@@ -1,0 +1,12 @@
+diff a/IncodeWindow/Form1.cs b/IncodeWindow/Form1.cs	(rejected hunks)
+@@ -99,9 +99,7 @@
+ 
+ 			_keys.Add(Keys.Space, new Action(Command.LeftDown));
+ 
+-            _abbreviations.Add(new List<Keys>() { Keys.G, Keys.M }, "christian.schladetsch@gmail.com");
+-            _abbreviations.Add(new List<Keys>() { Keys.P, Keys.A }, "17 Leonard St, Heidleberg Heights, VIC, 3081");
+-            _abbreviations.Add(new List<Keys>() { Keys.P, Keys.P }, "0416615748");
++            _abbreviations.Add("christian.schladetsch@gmail.com",               new List<Keys>() { Keys.G, Keys.M });
+ 
+ 		}
+ 

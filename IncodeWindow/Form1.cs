@@ -98,10 +98,28 @@ namespace IncodeWindow
 			_keys.Add(Keys.V, new Action(Command.ScrollDown));
 
 			_keys.Add(Keys.Space, new Action(Command.LeftDown));
+            _abbreviations.Add("christian.schladetsch@gmail.com", new List<Keys>() { Keys.G, Keys.M });
 
-            _abbreviations.Add("christian.schladetsch@gmail.com",               new List<Keys>() { Keys.G, Keys.M });
-
+            //LoadConfig();
 		}
+
+        const string ConfigFileName = "Congif.txt";
+
+        //void LoadConfig()
+        //{
+        //    var text = System.IO.File.ReadAllText(ConfigFileName).Split(new char[]{'\n'});
+        //    foreach (var line in text)
+        //    {
+        //        var bits = line.Split(new[] { ' ', 't' });
+        //        var abb = bits[0];
+        //        var repl = string.Empty;
+        //        for (var n = 1; n < bits.Length; ++n)
+        //            repl += bits[n];
+        //        _abbreviations.Add(abb, repl);
+        //        Debug.WriteLine("{0} -> {1}", )
+
+        //    }
+        //}
 
 		private void InstallHooks()
 		{
