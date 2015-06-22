@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using MouseKeyboardActivityMonitor;
 using MouseKeyboardActivityMonitor.WinApi;
@@ -38,6 +39,10 @@ namespace IncodeWindow
 
 			ScrollUp, ScrollDown,
 			LeftClick, RightClick, LeftDown, RightDown,
+
+            InsertText,
+
+            Escape,
 		}
 
 		// TODO: expose these to UI 
@@ -80,22 +85,19 @@ namespace IncodeWindow
 		private void Configure()
 		{
 			// clearly, this should be configured via a file, and the UI.
-			// but it isn't because fuck you. learn to code. just as easy to change this as a text file
+            _keys.Add(Keys.Escape, new Action(Command.Escape));
 			_keys.Add(Keys.E, new Action(Command.Up));
 			_keys.Add(Keys.S, new Action(Command.Left));
 			_keys.Add(Keys.D, new Action(Command.Down));
 			_keys.Add(Keys.F, new Action(Command.Right));
+            _keys.Add(Keys.LShiftKey, new Action(Command.InsertText));
 
 			_keys.Add(Keys.R, new Action(Command.ScrollUp));
 			_keys.Add(Keys.V, new Action(Command.ScrollDown));
 
-            //_keys.Add(Keys.H, new Action(Command.CursorLeft));
-            //_keys.Add(Keys.J, new Action(Command.CursorDown));
-            //_keys.Add(Keys.K, new Action(Command.CursorUp));
-            //_keys.Add(Keys.L, new Action(Command.CursorRight));
-
-
 			_keys.Add(Keys.Space, new Action(Command.LeftDown));
+
+            _abbreviations.Add(new List<Keys>() { Keys.G, Keys.M }, "christian.schladetsch@gmail.com");
 		}
 
 		private void InstallHooks()
@@ -116,6 +118,12 @@ namespace IncodeWindow
 
 			_watch.Start();
 		}
+
+        bool _firstDown;
+        DateTime _firstDownTime;
+        bool _abbrMode;
+        Dictionary<List<Keys>, string> _abbreviations = new Dictionary<List<Keys>, string>();
+        List<Keys> _abbreviation = new List<Keys>();
 
 		private void PerformCommands(object sender, EventArgs e)
 		{
@@ -141,7 +149,8 @@ namespace IncodeWindow
 			foreach (var action in _keys)
 			{
 				var act = action.Value;
-				if (act.Started == DateTime.MinValue)
+
+                if (act.Started == DateTime.MinValue)
 					continue;
 
 				// for vertical scroll
@@ -199,7 +208,27 @@ namespace IncodeWindow
 		}
 
 		private void OnKeyDown(object sender, KeyEventArgs e)
-		{
+        {
+            // if we're in the middle of an abbreviation, stop it
+            if (e.KeyCode == Keys.Escape && _abbrMode)
+            {
+                _abbrMode = false;
+                Eat(e);
+                return;
+            }
+
+            if (CheckCompleteAbbreviation(e))
+            {
+                Eat(e);
+                return;
+            }
+
+            if (TestAbbreviationStart(e.KeyCode))
+            {
+                //Eat(e);
+                return;
+            }
+
 			if (!_controlled)
 			{
 				if (e.KeyCode == OverrideKey)
@@ -207,6 +236,7 @@ namespace IncodeWindow
 					Eat(e);
 					StartControl();
 				}
+
 				return;
 			}
 
@@ -222,7 +252,6 @@ namespace IncodeWindow
 
 			action.Started = DateTime.Now;
 			
-			// TODO: this is a shitty hack and I need more or less scotch
 			switch (e.KeyCode)
 			{
 				case Keys.R:
@@ -239,6 +268,111 @@ namespace IncodeWindow
 					break;
 			}
 		}
+
+        /// <summary>
+        /// Returns 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="list"></param>
+        /// <param name="prefix"></param>
+        /// <returns>-1 if prefix is too short, 0 if prefix matches, 1 if list are identical</returns>
+        int StartsWith<T>(List<T> list, List<T> prefix) where T : IComparable
+        {
+            var n = 0;
+            foreach (var a in list)
+            {
+                if (n >= prefix.Count)
+                    return -1;
+
+                if (!prefix[n++].Equals(a))
+                    return 0;
+            }
+            return 1;
+        }
+
+        private bool CheckCompleteAbbreviation(KeyEventArgs e)
+        {
+            if (!_abbrMode)
+                return false;
+
+            _abbreviation.Add(e.KeyCode);
+
+            // check for an abbreviation being completed
+            foreach (var kv in _abbreviations)
+            {
+
+                Debug.WriteLine("Testing for " + kv.Value);
+
+                var test = StartsWith(kv.Key, _abbreviation);
+                switch (test)
+                {
+                    case 0:
+                        Debug.WriteLine("Prefix doesn't match, eating");
+                        Eat(e);
+                        // TODO: Beep
+                        return false;
+                    case 1:
+                        Debug.WriteLine("Prefix matches so far, eating");
+                        Eat(e);
+                        return true;
+                    case 2:
+                        Eat(e);
+                        break;
+
+                }
+
+
+                _keyboardOut.TextEntry(kv.Value);
+                _firstDown = false;
+                _abbrMode = false;
+                _abbreviation.Clear();
+
+                Debug.WriteLine("Inserted: " + kv.Value);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Return true if we have just entered abbreviation mode
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        bool TestAbbreviationStart(Keys key)
+        {
+            if (_abbrMode)
+                return true;
+
+            if (key != Keys.LShiftKey)
+                return false;
+
+            var now = DateTime.Now;
+
+            if (!_firstDown)
+            {
+                _firstDown = true;
+                _firstDownTime = now;
+                Debug.WriteLine("First down");
+                return false;
+            }
+            
+            var secondDownTime = now;
+            var dtt = (secondDownTime - _firstDownTime).TotalMilliseconds;
+            if (dtt > 500)
+            {
+                _firstDown = false;
+                _abbrMode = false;
+                Debug.WriteLine("Too long!");
+                return false;
+            }
+
+            _firstDown = false;
+            _abbrMode = true;
+
+            Debug.WriteLine("Entering abbreviation mode");
+
+            return true;
+        }
 
 		private void OnKeyUp(object sender, KeyEventArgs e)
 		{
