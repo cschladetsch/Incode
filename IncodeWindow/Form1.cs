@@ -48,8 +48,8 @@ namespace IncodeWindow
 		}
 
 		// TODO: expose these to UI 
-		public float Speed = 250;
-		public float Accel = 11;
+		public float Speed = 300;//250;
+		public float Accel = 15;
 		public float ScrollScale = 0.7f;
 		public float ScrollAccel = 1.15f; // amount of scroll events to make per second
 
@@ -92,12 +92,13 @@ namespace IncodeWindow
 			_keys.Add(Keys.S, new Action(Command.Left));
 			_keys.Add(Keys.D, new Action(Command.Down));
 			_keys.Add(Keys.F, new Action(Command.Right));
-            _keys.Add(Keys.LShiftKey, new Action(Command.InsertText));
+            _keys.Add(Keys.RShiftKey, new Action(Command.InsertText));
 
 			_keys.Add(Keys.R, new Action(Command.ScrollUp));
 			_keys.Add(Keys.V, new Action(Command.ScrollDown));
 
 			_keys.Add(Keys.Space, new Action(Command.LeftDown));
+			_keys.Add(Keys.C, new Action(Command.RightDown));
             _abbreviations.Add("christian.schladetsch@gmail.com", new List<Keys>() { Keys.G, Keys.M });
 
             //LoadConfig();
@@ -158,7 +159,10 @@ namespace IncodeWindow
 			foreach (var action in _keys)
 			{
 				var act = action.Value;
-				if (act.Started > DateTime.MinValue && act.Started < earliest && act.Command != Command.LeftDown)
+				var button = act.Command == Command.LeftDown || act.Command == Command.RightDown;
+				if (button)
+					continue;
+				if (act.Started > DateTime.MinValue && act.Started < earliest)
 					earliest = act.Started;
 			}
 			
@@ -202,7 +206,6 @@ namespace IncodeWindow
 
                     case Command.CursorLeft:
                         _keyboardOut.KeyDown(WindowsInput.Native.VirtualKeyCode.LEFT);
-                        Console.WriteLine("Left");
                         break;
                     case Command.CursorDown:
                         _keyboardOut.KeyDown(WindowsInput.Native.VirtualKeyCode.DOWN);
@@ -230,13 +233,9 @@ namespace IncodeWindow
 
 		private void OnKeyDown(object sender, KeyEventArgs e)
         {
-            ////Debug.WriteLine("_inserting = " + _inserting);
-
             if (_inserting > 0)
             {
                 _inserting--;
-                //e.Handled = true;
-                //e.SuppressKeyPress = true;
                 return;
             }
 
