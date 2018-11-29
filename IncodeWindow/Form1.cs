@@ -14,7 +14,6 @@ using WindowsInput;
 
 using Newtonsoft.Json;
 
-
 namespace IncodeWindow
 {
 	/// <summary>
@@ -44,15 +43,26 @@ namespace IncodeWindow
 
 		// the key to press to activate the custom mode
 		// works well for WASD 88-key blank keyboards ;)
-		//private const Keys OverrideKey = Keys.OemBackslash; 
+		//private const Keys OverrideKey = Keys.OemBackslash;   // for WASD 88-key
 		private const Keys OverrideKey = Keys.RControlKey;
 		private const Keys AbbrStartKey = Keys.RShiftKey;
 
-        private bool _abbrMode;
         private Dictionary<string, List<Keys>> _abbreviations = new Dictionary<string, List<Keys>>();
         private List<Keys> _abbreviation = new List<Keys>();
 
-        const string ConfigFileName = "Config.json";
+        private const string ConfigFileName = "Config.json";
+
+        private bool Abbreviating
+        {
+            get { return _abbrMode; }
+            set
+            {
+                _abbrMode = value;
+                _abbreviation.Clear();
+            }
+        }
+        private int _inserting;
+        private bool _abbrMode;
 
 		[Flags]
 		enum Command
@@ -85,9 +95,7 @@ namespace IncodeWindow
 		public Form1()
 		{
 			InitializeComponent();
-
 			Configure();
-
 			InstallHooks();
 		}
 
@@ -190,19 +198,6 @@ namespace IncodeWindow
 					case Command.ScrollDown:
 						_mouseOut.VerticalScroll(-t);
 						break;
-
-                    case Command.CursorLeft:
-                        _keyboardOut.KeyDown(WindowsInput.Native.VirtualKeyCode.LEFT);
-                        break;
-                    case Command.CursorDown:
-                        _keyboardOut.KeyDown(WindowsInput.Native.VirtualKeyCode.DOWN);
-                        break;
-                    case Command.CursorUp:
-                        _keyboardOut.KeyDown(WindowsInput.Native.VirtualKeyCode.UP);
-                        break;
-                    case Command.CursorRight:
-                        _keyboardOut.KeyDown(WindowsInput.Native.VirtualKeyCode.RIGHT);
-                        break;
 				}
 			}
 
@@ -226,7 +221,7 @@ namespace IncodeWindow
                 {
                     if (ke == e.KeyCode)
                     {
-                        Console.WriteLine("{0}", ke.ToString());
+                        Trace("{0}", ke.ToString());
                     }
                 }
             }
@@ -240,10 +235,9 @@ namespace IncodeWindow
             }
 
             // if we're in the middle of an abbreviation, stop it
-            if (e.KeyCode == Keys.Escape && _abbrMode)
+            if (e.KeyCode == Keys.Escape && Abbreviating)
             {
-                _abbrMode = false;
-                _abbreviation.Clear();
+                Abbreviating = false;
                 Eat(e);
                 return;
             }
@@ -299,13 +293,6 @@ namespace IncodeWindow
 			}
 		}
 
-        /// <summary>
-        /// Returns 
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="list"></param>
-        /// <param name="prefix"></param>
-        /// <returns>-1 if prefix doesn't match, 0 if prefix matches, 1 if prefix matches</returns>
         int StartsWith<T>(List<T> list, List<T> prefix) where T : IComparable
         {
             if (prefix.Count == 0)
@@ -326,52 +313,40 @@ namespace IncodeWindow
 
         private bool CheckCompleteAbbreviation(KeyEventArgs e)
         {
-            if (!_abbrMode)
+            if (!Abbreviating)
                 return false;
-
-            //Debug.WriteLine("Adding {0} to abbreviation", e.KeyCode);
 
             _abbreviation.Add(e.KeyCode);
 
             // check for an abbreviation being completed
             foreach (var kv in _abbreviations)
             {
-                ////Debug.WriteLine(count++);
-                Debug.WriteLine("Testing for " + kv.Key);
-
                 Eat(e);
 
                 var test = StartsWith(kv.Value, _abbreviation);
                 switch (test)
                 {
                     case 0:
-                        Debug.WriteLine("Prefix matches so far, eating");
+                        Trace("Prefix matches so far");
                         SystemSounds.Asterisk.Play();
                         return true;
 
                     case 1: 
-                        Debug.WriteLine("Inserted: " + kv.Value);
+                        Trace("Inserting: '{0}'", kv.Value);
                         SystemSounds.Hand.Play();
                         _inserting = kv.Key.Length;
 
                         _keyboardOut.TextEntry(kv.Key);
-                        //System.Windows.Forms.SendKeys.Send(kv.Value);
-                        //System.Windows.Forms.SendKeys.Flush();
-
-                        _abbrMode = false;
-                        _abbreviation.Clear();
+                        Abbreviating = false;
                         return true;
                 }
             }
 
             SystemSounds.Beep.Play();
-            _abbreviation.Clear();
-            _abbrMode = false;
+            Abbreviating = false;
             
             return false;
         }
-
-        private int _inserting;
 
         /// <summary>
         /// Return true if we have just entered abbreviation mode
@@ -380,17 +355,22 @@ namespace IncodeWindow
         /// <returns></returns>
         bool TestAbbreviationStart(Keys key)
         {
-            if (_abbrMode)
+            if (Abbreviating)
                 return true;
 
             if (key != AbbrStartKey)
                 return false;
 
-            _abbrMode = true;
+            Abbreviating = true;
 
-            Debug.WriteLine("Entering abbreviation mode");
+            Trace("Entering abbreviation mode");
 
             return true;
+        }
+
+        private void Trace(string fmt, params object[] args)
+        {
+            Debug.WriteLine(string.Format(fmt, args));
         }
 
 		private void OnKeyUp(object sender, KeyEventArgs e)
@@ -517,6 +497,8 @@ namespace IncodeWindow
                 ScrollAccel,
             };
             File.WriteAllText(ConfigFileName, JsonConvert.SerializeObject(json));
+
+            // TODO: abbreviations
         }
 
         private void UpdateUI()
@@ -528,6 +510,5 @@ namespace IncodeWindow
 
             // TODO: abbreviations
         }
-
 	}
 }
