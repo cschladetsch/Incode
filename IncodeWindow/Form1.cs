@@ -1,14 +1,19 @@
-﻿// (C) 2015 christian.schladetsch@gmail.com
+﻿// (C) 2015-18 christian.schladetsch@gmail.com
 
 using System;
+using System.Media;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.IO;
 using System.Windows.Forms;
 using MouseKeyboardActivityMonitor;
 using MouseKeyboardActivityMonitor.WinApi;
 using WindowsInput;
+
+using Newtonsoft.Json;
+
 
 namespace IncodeWindow
 {
@@ -17,21 +22,37 @@ namespace IncodeWindow
 	/// </summary>
 	public partial class Form1 : Form
 	{
+		// TODO: expose these to UI 
+		public float Speed = 300;//250;
+		public float Accel = 15;
+		public float ScrollScale = 0.7f;
+		public float ScrollAccel = 1.15f; // amount of scroll events to make per second
+
 		private KeyboardHookListener _keyboardIn;
 		private MouseHookListener _mouseIn;
-		
 		private InputSimulator _inputSimulator;
 		private IMouseSimulator _mouseOut;
 		private IKeyboardSimulator _keyboardOut;
-
 		private bool _controlled; // true while we control all input and output
 		private const float Frequency = 100.0f; // Hertz
-
 		private Timer _timer;
 		private float _tx, _ty; // the target mouse position
-
 		private readonly LowPass _mx = new LowPass(Frequency, 1000, 2); // the filtered mouse position
 		private readonly LowPass _my = new LowPass(Frequency, 1000, 2);
+		private readonly Dictionary<Keys, Action> _keys = new Dictionary<Keys, Action>();
+		private readonly Stopwatch _watch = new Stopwatch();
+
+		// the key to press to activate the custom mode
+		// works well for WASD 88-key blank keyboards ;)
+		//private const Keys OverrideKey = Keys.OemBackslash; 
+		private const Keys OverrideKey = Keys.RControlKey;
+		private const Keys AbbrStartKey = Keys.RShiftKey;
+
+        private bool _abbrMode;
+        private Dictionary<string, List<Keys>> _abbreviations = new Dictionary<string, List<Keys>>();
+        private List<Keys> _abbreviation = new List<Keys>();
+
+        const string ConfigFileName = "Config.json";
 
 		[Flags]
 		enum Command
@@ -47,12 +68,6 @@ namespace IncodeWindow
             Escape,
 		}
 
-		// TODO: expose these to UI 
-		public float Speed = 300;//250;
-		public float Accel = 15;
-		public float ScrollScale = 0.7f;
-		public float ScrollAccel = 1.15f; // amount of scroll events to make per second
-
 		/// <summary>
 		/// A pending thing to do - also used to map keys to actions
 		/// </summary>
@@ -67,14 +82,6 @@ namespace IncodeWindow
 			}
 		}
 
-		readonly Dictionary<Keys, Action> _keys = new Dictionary<Keys, Action>();
-
-		private readonly Stopwatch _watch = new Stopwatch();
-
-		// the key to press to activate the custom mode
-		// works well for WASD 88-key blank keyboards ;)
-		private const Keys OverrideKey = Keys.OemBackslash; 
-
 		public Form1()
 		{
 			InitializeComponent();
@@ -88,39 +95,25 @@ namespace IncodeWindow
 		{
 			// clearly, this should be configured via a file, and the UI.
             _keys.Add(Keys.Escape, new Action(Command.Escape));
+
 			_keys.Add(Keys.E, new Action(Command.Up));
 			_keys.Add(Keys.S, new Action(Command.Left));
 			_keys.Add(Keys.D, new Action(Command.Down));
 			_keys.Add(Keys.F, new Action(Command.Right));
-            _keys.Add(Keys.RShiftKey, new Action(Command.InsertText));
 
 			_keys.Add(Keys.R, new Action(Command.ScrollUp));
 			_keys.Add(Keys.V, new Action(Command.ScrollDown));
 
 			_keys.Add(Keys.Space, new Action(Command.LeftDown));
 			_keys.Add(Keys.C, new Action(Command.RightDown));
-            _abbreviations.Add("christian.schladetsch@gmail.com", new List<Keys>() { Keys.G, Keys.M });
 
-            //LoadConfig();
+            _keys.Add(Keys.RShiftKey, new Action(Command.InsertText));
+            _abbreviations.Add("christian.schladetsch@gmail.com", new List<Keys>() { Keys.P });
+            _abbreviations.Add("christian@liminalvr.com", new List<Keys>() { Keys.W });
+            _abbreviations.Add("+61(0)476 561 112", new List<Keys>() { Keys.M });
+
+            ReadConfig();
 		}
-
-        const string ConfigFileName = "Congif.txt";
-
-        //void LoadConfig()
-        //{
-        //    var text = System.IO.File.ReadAllText(ConfigFileName).Split(new char[]{'\n'});
-        //    foreach (var line in text)
-        //    {
-        //        var bits = line.Split(new[] { ' ', 't' });
-        //        var abb = bits[0];
-        //        var repl = string.Empty;
-        //        for (var n = 1; n < bits.Length; ++n)
-        //            repl += bits[n];
-        //        _abbreviations.Add(abb, repl);
-        //        Debug.WriteLine("{0} -> {1}", )
-
-        //    }
-        //}
 
 		private void InstallHooks()
 		{
@@ -140,12 +133,6 @@ namespace IncodeWindow
 
 			_watch.Start();
 		}
-
-        bool _firstDown;
-        DateTime _firstDownTime;
-        bool _abbrMode;
-        Dictionary<string, List<Keys>> _abbreviations = new Dictionary<string, List<Keys>>();
-        List<Keys> _abbreviation = new List<Keys>();
 
 		private void PerformCommands(object sender, EventArgs e)
 		{
@@ -233,6 +220,19 @@ namespace IncodeWindow
 
 		private void OnKeyDown(object sender, KeyEventArgs e)
         {
+            if (false)
+            { 
+                foreach (var ke in Enum.GetValues(typeof(Keys)).Cast<Keys>())
+                {
+                    if (ke == e.KeyCode)
+                    {
+                        Console.WriteLine("{0}", ke.ToString());
+                    }
+                }
+            }
+
+            // we're inserting a text expansion. in this case, we get phony key downs
+            // from window's input system. ignore them.
             if (_inserting > 0)
             {
                 _inserting--;
@@ -250,13 +250,12 @@ namespace IncodeWindow
 
             if (CheckCompleteAbbreviation(e))
             {
-                //Eat(e);
                 return;
             }
 
             if (TestAbbreviationStart(e.KeyCode))
             {
-                //Eat(e);
+                Eat(e);
                 return;
             }
 
@@ -333,50 +332,46 @@ namespace IncodeWindow
             //Debug.WriteLine("Adding {0} to abbreviation", e.KeyCode);
 
             _abbreviation.Add(e.KeyCode);
-            ////Debug.WriteLine(count2++);
 
             // check for an abbreviation being completed
             foreach (var kv in _abbreviations)
             {
                 ////Debug.WriteLine(count++);
-                //Debug.WriteLine("Testing for " + kv.Key + " " + _abbreviations.Count);
+                Debug.WriteLine("Testing for " + kv.Key);
 
                 Eat(e);
 
                 var test = StartsWith(kv.Value, _abbreviation);
                 switch (test)
                 {
-                    case -1:
-                        //Debug.WriteLine("Prefix doesn't match, eating");
-                        //_abbreviation.Clear();
-                        // TODO: Beep
-                        continue;
-
                     case 0:
-                        //Debug.WriteLine("Prefix matches so far, eating");
+                        Debug.WriteLine("Prefix matches so far, eating");
+                        SystemSounds.Asterisk.Play();
                         return true;
 
                     case 1: 
-                        //Debug.WriteLine("Inserted: " + kv.Value);
-                        //Debug.WriteLine("{0} {1} ", count, count2);
+                        Debug.WriteLine("Inserted: " + kv.Value);
+                        SystemSounds.Hand.Play();
                         _inserting = kv.Key.Length;
 
                         _keyboardOut.TextEntry(kv.Key);
                         //System.Windows.Forms.SendKeys.Send(kv.Value);
                         //System.Windows.Forms.SendKeys.Flush();
 
-                        _firstDown = false;
                         _abbrMode = false;
                         _abbreviation.Clear();
-
                         return true;
                 }
             }
 
+            SystemSounds.Beep.Play();
+            _abbreviation.Clear();
+            _abbrMode = false;
+            
             return false;
         }
 
-        int _inserting;
+        private int _inserting;
 
         /// <summary>
         /// Return true if we have just entered abbreviation mode
@@ -388,33 +383,12 @@ namespace IncodeWindow
             if (_abbrMode)
                 return true;
 
-            if (key != Keys.LShiftKey)
+            if (key != AbbrStartKey)
                 return false;
 
-            var now = DateTime.Now;
-
-            if (!_firstDown)
-            {
-                _firstDown = true;
-                _firstDownTime = now;
-                //Debug.WriteLine("First down");
-                return false;
-            }
-            
-            var secondDownTime = now;
-            var dtt = (secondDownTime - _firstDownTime).TotalMilliseconds;
-            if (dtt > 500)
-            {
-                _firstDown = false;
-                _abbrMode = false;
-                //Debug.WriteLine("Too long!");
-                return false;
-            }
-
-            _firstDown = false;
             _abbrMode = true;
 
-            //Debug.WriteLine("Entering abbreviation mode");
+            Debug.WriteLine("Entering abbreviation mode");
 
             return true;
         }
@@ -467,7 +441,78 @@ namespace IncodeWindow
 			_timer.Enabled = true;
 		}
 
-		private void EndControl()
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // TODO: reset key state
+            Application.Exit();
+        }
+
+        private void _scrollAccelText_Leave(object sender, EventArgs e)
+        {
+            WriteValue(f => ScrollAccel = f, _scrollAccelText);
+        }
+
+        private void _scrollScaleText_Leave(object sender, EventArgs e)
+        {
+            WriteValue(f => ScrollScale = f, _scrollScaleText);
+        }
+
+        private void _accelText_Leave(object sender, EventArgs e)
+        {
+            WriteValue(f => Accel = f, _accelText);
+        }
+
+        private void _speedText_Leave(object sender, EventArgs e)
+        {
+            WriteValue(f => Speed = f, _speedText);
+        }
+
+        private void WriteValue(Action<float> write, TextBox text)
+        {
+            write(float.Parse(text.Text));
+            WriteConfig();
+        }
+
+        private void ReadConfig()
+        {
+            if (File.Exists(ConfigFileName))
+            {
+                dynamic cfg = JsonConvert.DeserializeObject(System.IO.File.ReadAllText(ConfigFileName));
+                if (cfg != null)
+                {
+                    Speed = cfg.Speed;
+                    Accel = cfg.Accel;
+                    ScrollScale = cfg.ScrollScale;
+                    ScrollAccel = cfg.ScrollAccel;
+                }
+            }
+
+            UpdateUI();
+        }
+
+        private void WriteConfig()
+        {
+            var json = new
+            {
+                Speed,
+                Accel,
+                ScrollScale,
+                ScrollAccel,
+            };
+            File.WriteAllText(ConfigFileName, JsonConvert.SerializeObject(json));
+        }
+
+        private void UpdateUI()
+        {
+            _speedText.Text = Speed.ToString();
+            _accelText.Text = Accel.ToString();
+            _scrollAccelText.Text = ScrollAccel.ToString();
+            _scrollScaleText.Text = ScrollScale.ToString();
+
+            // TODO: abbreviations
+        }
+
+        private void EndControl()
 		{
 			_controlled = false;
 			_timer.Enabled = false;
