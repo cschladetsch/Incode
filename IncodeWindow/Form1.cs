@@ -428,6 +428,9 @@ namespace IncodeWindow
 			e.SuppressKeyPress = true;
 		}
 
+        /// <summary>
+        /// Take over keyboard control from Windows
+        /// </summary>
 		private void StartControl()
 		{
 			var pos = Cursor.Position;
@@ -441,6 +444,20 @@ namespace IncodeWindow
 			_timer.Enabled = true;
 		}
 
+        /// <summary>
+        /// Return normal input control to Windows
+        /// </summary>
+        private void EndControl()
+		{
+			_controlled = false;
+			_timer.Enabled = false;
+
+			// not needed, maybe, but it seems best to do this.
+			// one scenario is that the user presses control, then the space (to simulate
+			// a mouse down), then releases control, then space, resulting in a state where
+			// the system believes it has a left button down but there is not.
+			_mouseOut.LeftButtonUp();
+		}
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // TODO: reset key state
@@ -512,16 +529,5 @@ namespace IncodeWindow
             // TODO: abbreviations
         }
 
-        private void EndControl()
-		{
-			_controlled = false;
-			_timer.Enabled = false;
-
-			// not needed, maybe, but it seems best to do this.
-			// one scenario is that the user presses control, then the space (to simulate
-			// a mouse down), then releases control, then space, resulting in a state where
-			// the system believes it has a left button down but there is not.
-			_mouseOut.LeftButtonUp();
-		}
 	}
 }
