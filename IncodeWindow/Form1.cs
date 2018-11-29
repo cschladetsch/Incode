@@ -253,7 +253,7 @@ namespace IncodeWindow
                 return;
             }
 
-			if (!_controlled)
+			if (!Controlled)
 			{
 				if (e.KeyCode == OverrideKey)
 				{
@@ -375,23 +375,23 @@ namespace IncodeWindow
 
 		private void OnKeyUp(object sender, KeyEventArgs e)
 		{
-			if (!_controlled)
-				return;
+			//if (!Controlled)
+				//return;
 
 			if (e.KeyCode == OverrideKey)
 			{
 				Eat(e);
-				EndControl();
+				Controlled = false;
 				return;
 			}
 
 			if (!_keys.ContainsKey(e.KeyCode))
 				return;
 
-			Eat(e);
-
 			// sentinel values are bad. I use one here to indicate that an action is not active.
 			_keys[e.KeyCode].Started = DateTime.MinValue;
+
+			Eat(e);
 
 			// there is a better way
 			switch (e.KeyCode)
@@ -420,24 +420,49 @@ namespace IncodeWindow
 			_mx.Set(_tx);
 			_my.Set(_ty);
 
-			_controlled = true;
-			_timer.Enabled = true;
+            var delta = DateTime.Now - _controlStartTime;
+            if (delta.TotalMilliseconds < 300)
+            {
+                Trace("Double click control");
+
+                // TODO: move cursor to center of current display
+                var screen = Screen.FromPoint(Cursor.Position);
+                var area = screen.WorkingArea;
+                Cursor.Position = new Point(area.Width/2, area.Height/2);
+
+                Controlled = false;
+                _timer.Enabled = false;
+                _watch.Restart();
+                return;
+            }
+
+			Controlled = true;
 		}
 
-        /// <summary>
-        /// Return normal input control to Windows
-        /// </summary>
-        private void EndControl()
-		{
-			_controlled = false;
-			_timer.Enabled = false;
+        private bool Controlled
+        {
+            get { return _controlled; }
+            set
+            {
+                _controlled = value;
+                _timer.Enabled = value;
+                if (value)
+                    _controlStartTime = DateTime.Now;
+                else
+                    _mouseOut.LeftButtonUp();
+                ResetMouseFilter();
+            }
+        }
 
-			// not needed, maybe, but it seems best to do this.
-			// one scenario is that the user presses control, then the space (to simulate
-			// a mouse down), then releases control, then space, resulting in a state where
-			// the system believes it has a left button down but there is not.
-			_mouseOut.LeftButtonUp();
-		}
+        void ResetMouseFilter()
+        {
+            Trace("MouseCursor: {0}", Cursor.Position);
+            _mx.Set(Cursor.Position.X);
+            _my.Set(Cursor.Position.Y);
+        }
+
+        DateTime _controlStartTime;
+
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // TODO: reset key state
