@@ -1,4 +1,8 @@
 # Incode
+[![Build status](https://ci.appveyor.com/api/projects/status/github/cschladetsch/incode?svg=true)](https://ci.appveyor.com/project/cschladetsch/incode)
+[![CodeFactor](https://www.codefactor.io/repository/github/cschladetsch/incode/badge)](https://www.codefactor.io/repository/github/cschladetsch/incode)
+[![License](https://img.shields.io/github/license/cschladetsch/incode.svg?label=License&maxAge=86400)](./LICENSE.txt)
+[![Release](https://img.shields.io/github/release/cschladetsch/incode.svg?label=Release&maxAge=60)](https://github.com/cschladetsch/incode/releases/latest)
 
 Custom input system for keyboard and mouse for Windows.
 
