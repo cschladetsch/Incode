@@ -64,6 +64,8 @@ namespace Incode
         private const string ConfigFileName = "Config.json";
         private int _inserting;
         private bool _abbrMode;
+        private bool _mouseLeftDown;
+        private bool _mouseRightDown;
 
         public Form1()
         {
@@ -97,7 +99,7 @@ namespace Incode
             _keys.Add(Keys.R, new Action(Command.ScrollUp));
             _keys.Add(Keys.V, new Action(Command.ScrollDown));
             _keys.Add(Keys.Space, new Action(Command.LeftDown));
-            _keys.Add(Keys.C, new Action(Command.RightDown));
+            _keys.Add(Keys.G, new Action(Command.RightDown));
             _keys.Add(Keys.RShiftKey, new Action(Command.InsertText));
             
             _abbreviations.Add("christian.schladetsch@gmail.com", new List<Keys>() {Keys.P});
@@ -268,11 +270,13 @@ namespace Incode
                 case Keys.V:
                     _mouseOut.VerticalScroll(-ScrollAmount);
                     break;
-                case Keys.C:
+                case Keys.G:
                     _mouseOut.RightButtonDown();
+                    _mouseRightDown = true;
                     break;
                 case Keys.Space:
                     _mouseOut.LeftButtonDown();
+                    _mouseLeftDown = true;
                     break;
             }
         }
@@ -359,16 +363,27 @@ namespace Incode
         
         private void OnKeyUp(object sender, KeyEventArgs e)
         {
-            //if (!Controlled)
-            //return;
-
             if (e.KeyCode == _overrideKey)
             {
+                if (_mouseLeftDown)
+                {
+                    _mouseOut.LeftButtonUp();
+                    _mouseLeftDown = false;
+                }
+                if (_mouseRightDown)
+                {
+                    _mouseOut.RightButtonUp();
+                    _mouseRightDown = false;
+                }
+                
                 Eat(e);
                 Controlled = false;
                 Trace("Not controlling");
                 return;
             }
+
+            if (!Controlled)
+                return;
 
             if (!_keys.ContainsKey(e.KeyCode))
                 return;
@@ -381,7 +396,7 @@ namespace Incode
             // there is a better way
             switch (e.KeyCode)
             {
-                case Keys.C:
+                case Keys.G:
                     _mouseOut.RightButtonUp();
                     break;
                 case Keys.Space:
