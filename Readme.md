@@ -3,11 +3,11 @@
 
 Custom input system for keyboard and mouse for Windows.
 
-This application allows the user to control the mouse and other systems such as cursor and scrolling using a minimal set of keys. At worst, it is a great replacement for the Microsoft "MouseKeys" system.
+This application allows the user to control the mouse and other systems such as cursor and scrolling using a minimal set of keys - without actually using the mouse.
 
-Hold an 'Override' button - By default the Right Control key - and then use the rest of the keyboard to send custom input.
+Hold an 'Override' button - By default the Right-Control key - and then use the rest of the keyboard to send custom input.
 
-Use the provided `SharKeys` binary to remap the CapsLock key to the Right Control Key.
+Use the provided `SharpKeys` binary to remap the CapsLock key to the Right-Control Key. The Capslockc
 
 For instance, press and hold the Override button, and use ESDF to move the mouse cursor up down left right. Movement is passed through a customised filter to emulate the behavior of an Ibm ThinkPad clit button.  
 
