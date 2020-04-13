@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("KeyMouse")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("InCode")]
+[assembly: AssemblyDescription("Control mouse with Keyboard. Add abbreviations.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Microsoft")]
-[assembly: AssemblyProduct("KeyMouse")]
-[assembly: AssemblyCopyright("Copyright © Microsoft 2013")]
+[assembly: AssemblyCompany("Christian Schladetsch")]
+[assembly: AssemblyProduct("InCode")]
+[assembly: AssemblyCopyright("© christian.schladetsch@gmail.com 2013")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

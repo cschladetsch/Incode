@@ -1,20 +1,20 @@
-﻿// (C) 2015-18 christian.schladetsch@gmail.com
+﻿// (C) 2015-20 christian.schladetsch@gmail.com
 
-using System;
-using System.Media;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
-using System.IO;
-using System.Windows.Forms;
-using MouseKeyboardActivityMonitor;
-using MouseKeyboardActivityMonitor.WinApi;
-using WindowsInput;
-using Newtonsoft.Json;
-
-namespace IncodeWindow
+namespace Incode
 {
+    using System;
+    using System.Media;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.Drawing;
+    using System.Linq;
+    using System.IO;
+    using System.Windows.Forms;
+    using MouseKeyboardActivityMonitor;
+    using MouseKeyboardActivityMonitor.WinApi;
+    using WindowsInput;
+    using Newtonsoft.Json;
+
     /// <summary>
     /// Press and hold the MouseEscape key (default to Right-Control) to enter MouseMode.
     /// Remap Right-Control to CapsLock using:
@@ -27,6 +27,16 @@ namespace IncodeWindow
         public float Accel = 15;
         public float ScrollScale = 0.7f;
         public float ScrollAccel = 1.15f; // amount of scroll events to make per second
+
+        private bool Abbreviating
+        {
+            get => _abbrMode;
+            set
+            {
+                _abbrMode = value;
+                _abbreviation.Clear();
+            }
+        }
 
         private KeyboardHookListener _keyboardIn;
         private MouseHookListener _mouseIn;
@@ -41,72 +51,27 @@ namespace IncodeWindow
         private readonly LowPass _my = new LowPass(Frequency, 1000, 2);
         private readonly Dictionary<Keys, Action> _keys = new Dictionary<Keys, Action>();
         private readonly Stopwatch _watch = new Stopwatch();
+        private DateTime _controlStartTime;
 
         // the key to press to activate the custom mode
         // works well for WASD 88-key blank keyboards ;)
         //private const Keys OverrideKey = Keys.OemBackslash;   // for WASD 88-key
-        private const Keys OverrideKey = Keys.RControlKey;
-        private const Keys AbbrStartKey = Keys.NumLock;
-
-        private Dictionary<string, List<Keys>> _abbreviations = new Dictionary<string, List<Keys>>();
-        private List<Keys> _abbreviation = new List<Keys>();
-
+        private const Keys _overrideKey = Keys.RControlKey;
+        private const Keys _abbrStartKey = Keys.NumLock;
+        private readonly Dictionary<string, List<Keys>> _abbreviations = new Dictionary<string, List<Keys>>();
+        private readonly List<Keys> _abbreviation = new List<Keys>();
         private const string ConfigFileName = "Config.json";
-
-        private bool Abbreviating
-        {
-            get => _abbrMode;
-            set
-            {
-                _abbrMode = value;
-                _abbreviation.Clear();
-            }
-        }
-
         private int _inserting;
         private bool _abbrMode;
-
-        [Flags]
-        enum Command
-        {
-            Up = 1,
-            Down = 2,
-            Left = 4,
-            Right = 8,
-            CursorLeft,
-            CursorRight,
-            CursorUp,
-            CursorDown,
-
-            ScrollUp,
-            ScrollDown,
-            LeftClick,
-            RightClick,
-            LeftDown,
-            RightDown,
-
-            InsertText,
-
-            Escape,
-        }
-
-        /// <summary>
-        /// A pending thing to do - also used to map keys to actions
-        /// </summary>
-        class Action
-        {
-            public readonly Command Command; // what to do/emulate
-            public DateTime Started; // when the key was pressed
-
-            public Action(Command dir) => Command = dir;
-        }
 
         public Form1()
         {
             InitializeComponent();
             Configure();
             InstallHooks();
-            
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
+            MinimizeBox = true; 
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
@@ -124,18 +89,14 @@ namespace IncodeWindow
         {
             // clearly, this should be configured via a file, and the UI.
             _keys.Add(Keys.Escape, new Action(Command.Escape));
-
             _keys.Add(Keys.E, new Action(Command.Up));
             _keys.Add(Keys.S, new Action(Command.Left));
             _keys.Add(Keys.D, new Action(Command.Down));
             _keys.Add(Keys.F, new Action(Command.Right));
-
             _keys.Add(Keys.R, new Action(Command.ScrollUp));
             _keys.Add(Keys.V, new Action(Command.ScrollDown));
-
             _keys.Add(Keys.Space, new Action(Command.LeftDown));
             _keys.Add(Keys.C, new Action(Command.RightDown));
-
             _keys.Add(Keys.RShiftKey, new Action(Command.InsertText));
             
             _abbreviations.Add("christian.schladetsch@gmail.com", new List<Keys>() {Keys.P});
@@ -277,7 +238,7 @@ namespace IncodeWindow
 
             if (!Controlled)
             {
-                if (e.KeyCode == OverrideKey)
+                if (e.KeyCode == _overrideKey)
                 {
                     Eat(e);
                     StartControl();
@@ -380,7 +341,7 @@ namespace IncodeWindow
             if (Abbreviating)
                 return true;
 
-            if (key != AbbrStartKey)
+            if (key != _abbrStartKey)
                 return false;
 
             Abbreviating = true;
@@ -400,7 +361,7 @@ namespace IncodeWindow
             //if (!Controlled)
             //return;
 
-            if (e.KeyCode == OverrideKey)
+            if (e.KeyCode == _overrideKey)
             {
                 Eat(e);
                 Controlled = false;
@@ -484,32 +445,10 @@ namespace IncodeWindow
             _my.Set(Cursor.Position.Y);
         }
 
-        DateTime _controlStartTime;
-
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // TODO: reset key state
             Application.Exit();
-        }
-
-        private void _scrollAccelText_Leave(object sender, EventArgs e)
-        {
-            WriteValue(f => ScrollAccel = f, _scrollAccelText);
-        }
-
-        private void _scrollScaleText_Leave(object sender, EventArgs e)
-        {
-            WriteValue(f => ScrollScale = f, _scrollScaleText);
-        }
-
-        private void _accelText_Leave(object sender, EventArgs e)
-        {
-            WriteValue(f => Accel = f, _accelText);
-        }
-
-        private void _speedText_Leave(object sender, EventArgs e)
-        {
-            WriteValue(f => Speed = f, _speedText);
         }
 
         private void WriteValue(Action<float> write, TextBox text)
@@ -532,7 +471,7 @@ namespace IncodeWindow
                 }
             }
 
-            UpdateUI();
+            UpdateUi();
         }
 
         private void WriteConfig()
@@ -549,7 +488,7 @@ namespace IncodeWindow
             // TODO: abbreviations
         }
 
-        private void UpdateUI()
+        private void UpdateUi()
         {
             _speedText.Text = Speed.ToString();
             _accelText.Text = Accel.ToString();
@@ -557,6 +496,26 @@ namespace IncodeWindow
             _scrollScaleText.Text = ScrollScale.ToString();
 
             // TODO: abbreviations
+        }
+        
+        private void _scrollAccelText_Leave(object sender, EventArgs e)
+            => WriteValue(f => ScrollAccel = f, _scrollAccelText);
+
+        private void _scrollScaleText_Leave(object sender, EventArgs e)
+            => WriteValue(f => ScrollScale = f, _scrollScaleText);
+
+        private void _accelText_Leave(object sender, EventArgs e)
+            => WriteValue(f => Accel = f, _accelText);
+
+        private void _speedText_Leave(object sender, EventArgs e)
+            => WriteValue(f => Speed = f, _speedText);
+
+        private void statusStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+        }
+
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
         }
     }
 }

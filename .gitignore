@@ -3,6 +3,7 @@
 *.DS_Store
 
 .vs/
+.idea/
 ThirdParty/sharpkeys/.idea
 ThirdParty/sharpkeys/SharpKeys/.idea
 
