@@ -24,9 +24,10 @@ namespace Incode
     public partial class Form1 : Form
     {
         public float Speed = 300; //250;
-        public float Accel = 15;
+        public float Accel = 12;
         public float ScrollScale = 0.7f;
         public float ScrollAccel = 1.15f; // amount of scroll events to make per second
+        public int ScrollAmount = 3;
 
         private bool Abbreviating
         {
@@ -80,7 +81,7 @@ namespace Incode
             _mouseIn.Stop();
             
             _keyboardIn.Dispose();
-            _mouseIn.Stop();
+            _mouseIn.Dispose();
             
             base.OnFormClosed(e);
         }
@@ -262,10 +263,10 @@ namespace Incode
             switch (e.KeyCode)
             {
                 case Keys.R:
-                    _mouseOut.VerticalScroll(1);
+                    _mouseOut.VerticalScroll(ScrollAmount);
                     break;
                 case Keys.V:
-                    _mouseOut.VerticalScroll(-1);
+                    _mouseOut.VerticalScroll(-ScrollAmount);
                     break;
                 case Keys.C:
                     _mouseOut.RightButtonDown();
@@ -380,6 +381,9 @@ namespace Incode
             // there is a better way
             switch (e.KeyCode)
             {
+                case Keys.C:
+                    _mouseOut.RightButtonUp();
+                    break;
                 case Keys.Space:
                     _mouseOut.LeftButtonUp();
                     break;
@@ -482,6 +486,7 @@ namespace Incode
                 Accel,
                 ScrollScale,
                 ScrollAccel,
+                ScrollAmount,
             };
             File.WriteAllText(ConfigFileName, JsonConvert.SerializeObject(json));
 
@@ -494,6 +499,7 @@ namespace Incode
             _accelText.Text = Accel.ToString();
             _scrollAccelText.Text = ScrollAccel.ToString();
             _scrollScaleText.Text = ScrollScale.ToString();
+            _scrollAmount.Text = ScrollAmount.ToString();
 
             // TODO: abbreviations
         }
@@ -504,18 +510,13 @@ namespace Incode
         private void _scrollScaleText_Leave(object sender, EventArgs e)
             => WriteValue(f => ScrollScale = f, _scrollScaleText);
 
+        private void _scrollAmountText_Leave(object sender, EventArgs e)
+            => WriteValue(f => ScrollAmount = (int)f, _scrollAmount);
+
         private void _accelText_Leave(object sender, EventArgs e)
             => WriteValue(f => Accel = f, _accelText);
 
         private void _speedText_Leave(object sender, EventArgs e)
             => WriteValue(f => Speed = f, _speedText);
-
-        private void statusStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
-        {
-        }
-
-        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-        }
     }
 }

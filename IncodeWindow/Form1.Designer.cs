@@ -43,6 +43,8 @@
 			this._accelText = new System.Windows.Forms.TextBox();
 			this._scrollScaleText = new System.Windows.Forms.TextBox();
 			this._scrollAccelText = new System.Windows.Forms.TextBox();
+			this._scrollAmount = new System.Windows.Forms.TextBox();
+			this.label5 = new System.Windows.Forms.Label();
 			this.statusStrip1.SuspendLayout();
 			this.menuStrip1.SuspendLayout();
 			this.SuspendLayout();
@@ -50,7 +52,7 @@
 			// statusStrip1
 			// 
 			this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {this.toolStripStatusLabel1});
-			this.statusStrip1.Location = new System.Drawing.Point(0, 161);
+			this.statusStrip1.Location = new System.Drawing.Point(0, 194);
 			this.statusStrip1.Name = "statusStrip1";
 			this.statusStrip1.Padding = new System.Windows.Forms.Padding(1, 0, 16, 0);
 			this.statusStrip1.Size = new System.Drawing.Size(257, 22);
@@ -58,8 +60,6 @@
 			this.statusStrip1.Stretch = false;
 			this.statusStrip1.TabIndex = 0;
 			this.statusStrip1.Text = "statusStrip1";
-			this.statusStrip1.ItemClicked +=
-				new System.Windows.Forms.ToolStripItemClickedEventHandler(this.statusStrip1_ItemClicked);
 			// 
 			// toolStripStatusLabel1
 			// 
@@ -88,7 +88,7 @@
 			// exitToolStripMenuItem
 			// 
 			this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-			this.exitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.exitToolStripMenuItem.Size = new System.Drawing.Size(93, 22);
 			this.exitToolStripMenuItem.Text = "E&xit";
 			this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
 			// 
@@ -122,7 +122,7 @@
 			// label4
 			// 
 			this.label4.AutoSize = true;
-			this.label4.Location = new System.Drawing.Point(15, 126);
+			this.label4.Location = new System.Drawing.Point(15, 125);
 			this.label4.Name = "label4";
 			this.label4.Size = new System.Drawing.Size(65, 15);
 			this.label4.TabIndex = 2;
@@ -154,17 +154,36 @@
 			// 
 			// _scrollAccelText
 			// 
-			this._scrollAccelText.Location = new System.Drawing.Point(92, 123);
+			this._scrollAccelText.Location = new System.Drawing.Point(92, 122);
 			this._scrollAccelText.Name = "_scrollAccelText";
 			this._scrollAccelText.Size = new System.Drawing.Size(90, 23);
 			this._scrollAccelText.TabIndex = 4;
 			this._scrollAccelText.Leave += new System.EventHandler(this._scrollAccelText_Leave);
 			// 
+			// _scrollAmount
+			// 
+			this._scrollAmount.Location = new System.Drawing.Point(92, 151);
+			this._scrollAmount.Name = "_scrollAmount";
+			this._scrollAmount.Size = new System.Drawing.Size(90, 23);
+			this._scrollAmount.TabIndex = 6;
+			this._scrollAmount.Leave += new System.EventHandler(this._scrollAmountText_Leave);
+			// 
+			// label5
+			// 
+			this.label5.AutoSize = true;
+			this.label5.Location = new System.Drawing.Point(15, 154);
+			this.label5.Name = "label5";
+			this.label5.Size = new System.Drawing.Size(80, 15);
+			this.label5.TabIndex = 5;
+			this.label5.Text = "ScrollAmount\r\n";
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(257, 183);
+			this.ClientSize = new System.Drawing.Size(257, 216);
+			this.Controls.Add(this._scrollAmount);
+			this.Controls.Add(this.label5);
 			this.Controls.Add(this._scrollAccelText);
 			this.Controls.Add(this._scrollScaleText);
 			this.Controls.Add(this._accelText);
@@ -205,6 +224,8 @@
         private System.Windows.Forms.TextBox _scrollScaleText;
         private System.Windows.Forms.TextBox _scrollAccelText;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.TextBox _scrollAmount;
 	}
 }
 
