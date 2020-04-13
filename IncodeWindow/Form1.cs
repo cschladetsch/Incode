@@ -74,15 +74,15 @@ namespace Incode
             MinimizeBox = true; 
         }
 
-        protected override void OnFormClosing(FormClosingEventArgs e)
+        protected override void OnFormClosed(FormClosedEventArgs e)
         {
-            base.OnFormClosing(e);
-            
             _keyboardIn.Stop();
             _mouseIn.Stop();
             
             _keyboardIn.Dispose();
             _mouseIn.Stop();
+            
+            base.OnFormClosed(e);
         }
 
         private void Configure()
