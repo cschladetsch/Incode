@@ -23,7 +23,6 @@ namespace IncodeWindow
     /// </summary>
     public partial class Form1 : Form
     {
-        // TODO: expose these to UI 
         public float Speed = 300; //250;
         public float Accel = 15;
         public float ScrollScale = 0.7f;

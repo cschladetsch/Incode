@@ -3,6 +3,8 @@
 *.DS_Store
 
 .vs/
+ThirdParty/sharpkeys/.idea
+ThirdParty/sharpkeys/SharpKeys/.idea
 
 #Visual Studio files
 *.[Oo]bj

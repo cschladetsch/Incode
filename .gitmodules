@@ -1,0 +1,3 @@
+[submodule "ThirdParty/sharpkeys"]
+	path = ThirdParty/sharpkeys
+	url = https://github.com/randyrants/sharpkeys.git
