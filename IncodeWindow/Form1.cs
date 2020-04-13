@@ -16,6 +16,9 @@ using Newtonsoft.Json;
 namespace IncodeWindow
 {
     /// <summary>
+    /// Press and hold the MouseEscape key (default to Right-Control) to enter MouseMode.
+    /// Remap Right-Control to CapsLock using:
+    /// 
     /// Yeah, this should be a service, or at least an app that minimises to the system tray.
     /// </summary>
     public partial class Form1 : Form
@@ -44,7 +47,7 @@ namespace IncodeWindow
         // works well for WASD 88-key blank keyboards ;)
         //private const Keys OverrideKey = Keys.OemBackslash;   // for WASD 88-key
         private const Keys OverrideKey = Keys.RControlKey;
-        private const Keys AbbrStartKey = Keys.None;
+        private const Keys AbbrStartKey = Keys.NumLock;
 
         private Dictionary<string, List<Keys>> _abbreviations = new Dictionary<string, List<Keys>>();
         private List<Keys> _abbreviation = new List<Keys>();
@@ -53,7 +56,7 @@ namespace IncodeWindow
 
         private bool Abbreviating
         {
-            get { return _abbrMode; }
+            get => _abbrMode;
             set
             {
                 _abbrMode = value;
@@ -96,10 +99,7 @@ namespace IncodeWindow
             public readonly Command Command; // what to do/emulate
             public DateTime Started; // when the key was pressed
 
-            public Action(Command dir)
-            {
-                Command = dir;
-            }
+            public Action(Command dir) => Command = dir;
         }
 
         public Form1()
@@ -107,6 +107,18 @@ namespace IncodeWindow
             InitializeComponent();
             Configure();
             InstallHooks();
+            
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            
+            _keyboardIn.Stop();
+            _mouseIn.Stop();
+            
+            _keyboardIn.Dispose();
+            _mouseIn.Stop();
         }
 
         private void Configure()
@@ -304,7 +316,7 @@ namespace IncodeWindow
             }
         }
 
-        int StartsWith<T>(List<T> list, List<T> prefix) where T : IComparable
+        private static int StartsWith<T>(IEnumerable<T> list, IList<T> prefix) where T : IComparable
         {
             if (prefix.Count == 0)
                 return -1;
@@ -364,7 +376,7 @@ namespace IncodeWindow
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        bool TestAbbreviationStart(Keys key)
+        private bool TestAbbreviationStart(Keys key)
         {
             if (Abbreviating)
                 return true;
@@ -379,11 +391,11 @@ namespace IncodeWindow
             return true;
         }
 
-        private void Trace(string fmt, params object[] args)
+        private static void Trace(string fmt, params object[] args)
         {
             Debug.WriteLine(string.Format(fmt, args));
         }
-
+        
         private void OnKeyUp(object sender, KeyEventArgs e)
         {
             //if (!Controlled)
@@ -393,6 +405,7 @@ namespace IncodeWindow
             {
                 Eat(e);
                 Controlled = false;
+                Trace("Not controlling");
                 return;
             }
 
