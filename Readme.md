@@ -24,10 +24,6 @@ This project uses submodules, so you have to include them too:
 $ git submodule init --recursive
 ```
 
-## Bugs
-Feel free to [contact me](mailto:christian@schladetsch.com) with comments, suggestions or bugs.
-
-<<<<<<< HEAD
 ## Abbreviations
 Enter abbreviation mode with `Interrupt`-Q (typically Capslock-Q). Then you can insert any text as mapped in the config file.
 
@@ -36,7 +32,6 @@ For instance, my email address is `christian@schladetsch.com`. I end up typing t
 The gm is the abbreviation stored in the Json file. I've added a bunch of things I use a lot, like passwords etc. Obviously you'll have to make your own Config.json in the same folder as the IncodeWindow.exe executable.
 
 ## Json Config
-
 The configuration is stored in Config.json, in the same folder as the app.
 
 A typical config file would look like:
@@ -62,4 +57,6 @@ A typical config file would look like:
 
 ```
 
-Feel free to contact me with comments, suggestions or bugs.
+## Bugs
+Feel free to [contact me](mailto:christian@schladetsch.com) with comments, suggestions or bugs.
+
