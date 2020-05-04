@@ -17,4 +17,38 @@ The space bar simulates the left mouse button, and G the right mouse button.
 
 There is some customisation available via a simple GUI, but the best way is to just edit the code. It's not great code, but the configuration itself is quite straight-forward.
 
+## Abbreviations
+Enter abbreviation mode with `Interrupt`-Q (typically Capslock-Q). Then you can insert any text as mapped in the config file.
+
+For instance, my email address is `christian@schladetsch.com`. I end up typing that a *lot*. Now I can enter it with `Interrupt`-Qgm.
+
+The gm is the abbreviation stored in the Json file. I've added a bunch of things I use a lot, like passwords etc. Obviously you'll have to make your own Config.json in the same folder as the IncodeWindow.exe executable.
+
+## Json Config
+
+The configuration is stored in Config.json, in the same folder as the app.
+
+A typical config file would look like:
+
+```json
+{
+  "Abbreviations":
+  {
+    "gm" :  "christian.schladetsch@gmail.com",
+    "vgm" : "christian@schladetsch.com",
+    "ph" :  "04712341234",
+    "gph" : "+61(0)37234524",
+    "cc" :  "1234123412341234",
+    "p1" : "password",
+    "p2" : "hunter11"
+  },
+  "Speed": 250,
+  "Accel": 12,
+  "ScrollScale": 0.5,
+  "ScrollAccel": 1.15,
+  "ScrollAmount": 3
+}
+
+```
+
 Feel free to contact me with comments, suggestions or bugs.
