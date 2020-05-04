@@ -3,18 +3,19 @@
 
 Custom input system for keyboard and mouse for Windows.
 
-This application allows the user to control the mouse and other systems such as cursor and scrolling using a minimal set of keys - without actually using the mouse.
+This application allows the user to control the mouse and other systems such as cursor and scrolling using a minimal set of keys - without actually using the mouse. It also allows for the use of abbreviations. Yes, there are other tools that do this and better but hey.
 
 ## Usage
-Hold an 'Override' button - By default the Right-Control key - and then use the rest of the keyboard to send custom input.
+Hold an 'Interrupt' button - By default the Right-Control key - and then use the rest of the keyboard to send custom input.
 
 Use the provided `SharpKeys` binary to remap the CapsLock key to the Right-Control Key. The CapsLock key is an anacronism in any case, may as well put it to good use.
 
-For instance, press and hold the 'Override' button, and:
+For instance, press and hold the `Interrupt` button, and:
 * use `ESDF` to move the mouse cursor up down left right. Movement is passed through a customised filter to emulate the behavior of an Ibm ThinkPad clit button.  
 * `R` and `V` keys send scroll up and down, again with a custom filter and timings. 
 * The `space bar` simulates the left mouse button
 * `G` the right mouse button.
+* You can also double-click. I think the threshold is 300ms.
 
 There is some customisation available via a simple GUI, but to change the keys the only current way is to just edit the code.
 
@@ -40,13 +41,15 @@ A typical config file would look like:
 {
   "Abbreviations":
   {
-    "gm" :  "christian.schladetsch@gmail.com",
-    "vgm" : "christian@schladetsch.com",
-    "ph" :  "04712341234",
-    "gph" : "+61(0)37234524",
-    "cc" :  "1234123412341234",
-    "p1" : "password",
-    "p2" : "hunter11"
+    "gg":  "christian.schladetsch@gmail.com",
+    "vgg": "christian@schladetsch.com",
+    "ph":  "04712341234",
+    "gph": "+61(0)37234524",
+    "cc":  "1234123412341234",
+    "p1": "password",
+    "p2": "hunter11",
+    "p3": "not-telling",
+    "ad": "29 Fuddle St, East Place, Somewhere, Country, 3002"
   },
   "Speed": 250,
   "Accel": 12,
