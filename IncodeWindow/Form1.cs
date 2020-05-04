@@ -306,13 +306,13 @@ namespace Incode
                 {
                     case AbbrevResult.Matching:
                         Trace($"Prefix {kv.Key} matches so far");
-                        SystemSounds.Asterisk.Play();
+                        //SystemSounds.Asterisk.Play();
                         return test;
 
                     case AbbrevResult.Matched:
                         Trace($"Inserting: {kv.Key} -> {kv.Value}");
-                        SystemSounds.Hand.Play();
-                        _inserting = kv.Key.Length;
+                        //SystemSounds.Hand.Play();
+                        _inserting = kv.Value.Length;
 
                         _keyboardOut.TextEntry(kv.Value);
                         Abbreviating = false;
@@ -321,7 +321,7 @@ namespace Incode
             }
 
             Trace($"No abbrev found for {_abbreviation}");
-            SystemSounds.Beep.Play();
+            //SystemSounds.Beep.Play();
             Abbreviating = false;
             return AbbrevResult.NoMatch;
         }
@@ -477,26 +477,21 @@ namespace Incode
             WriteConfig();
         }
 
-        struct ConfigData
-        {
-            public Dictionary<string, string> Abbreviations;
-            public float Speed;
-            public float Accel;
-            public float ScrollScale;
-            public float ScrollAccel;
-            public int ScrollAmount;
-        }
-
         private ConfigData _config;
 
         private void ReadConfig()
         {
-            Trace($"{Directory.GetCurrentDirectory()}");
+            var cfg = Path.Combine(Directory.GetCurrentDirectory(), ConfigFileName);
+            Trace($"Reading from {cfg}");
             
-            if (File.Exists(ConfigFileName))
+            if (File.Exists(cfg))
             {
-                var text = File.ReadAllText(ConfigFileName);
+                var text = File.ReadAllText(cfg);
                 _config = JsonConvert.DeserializeObject<ConfigData>(text);
+                foreach (var ab in _config.Abbreviations)
+                {
+                    Trace($"{ab.Key} => {ab.Value}");
+                }
             }
 
             UpdateUi();
