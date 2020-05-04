@@ -66,7 +66,6 @@ namespace Incode
         // enter abbreviation mode. press escape to leave
         private const Keys _abbrStartKey = Keys.Q;
         private bool _abbrMode;
-        private Dictionary<string, string> _abbreviations = new Dictionary<string,string>();
         private string _abbreviation;
 
         public Form1()
@@ -106,10 +105,6 @@ namespace Incode
             _keys.Add(Keys.Q, new Action(Command.Abbreviate));
             // _keys.Add(Keys.RShiftKey, new Action(Command.InsertText));
             
-            // _abbreviations.Add("christian.schladetsch@gmail.com", new List<Keys>() {Keys.P});
-            // _abbreviations.Add("christian@schladetsch.com", new List<Keys>() {Keys.W});
-            // _abbreviations.Add("+61(0)476 561 112", new List<Keys>() {Keys.M});
-
             ReadConfig();
         }
 
@@ -299,11 +294,11 @@ namespace Incode
             
             // append char from keycode
             var kc = new KeysConverter();
-            var keyChar = kc.ConvertToString(e.KeyData);
+            var keyChar = kc.ConvertToString(e.KeyData)?.ToLower();
             _abbreviation += keyChar;
 
             // check for an abbreviation being completed
-            foreach (var kv in _abbreviations)
+            foreach (var kv in _config.Abbreviations)
             {
                 Eat(e);
 
@@ -334,7 +329,7 @@ namespace Incode
 
         private AbbrevResult CheckAbbrev(string key)
         {
-            if (_abbreviation == key)
+            if (_abbreviation.ToLower() == key)
                 return AbbrevResult.Matched;
             return key.StartsWith(_abbreviation) ? AbbrevResult.Matching : AbbrevResult.NoMatch;
         }
