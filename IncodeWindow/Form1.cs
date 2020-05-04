@@ -7,7 +7,6 @@ namespace Incode
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Drawing;
-    using System.Linq;
     using System.IO;
     using System.Windows.Forms;
     using MouseKeyboardActivityMonitor;
@@ -343,6 +342,9 @@ namespace Incode
         {
             if (Abbreviating)
                 return true;
+
+            if (!Controlled)
+                return false;
 
             if (key != _abbrStartKey)
                 return false;
