@@ -28,9 +28,9 @@ $ git submodule init --recursive
 ## Abbreviations
 Enter abbreviation mode with `Interrupt`-Q (typically Capslock-Q). Then you can insert any text as mapped in the config file.
 
-For instance, my email address is `christian@schladetsch.com`. I end up typing that a *lot*. Now I can enter it with `Interrupt`-Qgm.
+For instance, my email address is `christian@schladetsch.com`. I end up typing that a *lot*. Now I can enter it with `Interrupt`-Qg.
 
-The gm is the abbreviation stored in the Json file. I've added a bunch of things I use a lot, like passwords etc. Obviously you'll have to make your own Config.json in the same folder as the IncodeWindow.exe executable.
+The `g` is the abbreviation stored in the Json file. I've added a bunch of things I use a lot, like passwords etc. Obviously you'll have to make your own Config.json in the same folder as the IncodeWindow.exe executable.
 
 ## Json Config
 The configuration is stored in Config.json, in the same folder as the app.
