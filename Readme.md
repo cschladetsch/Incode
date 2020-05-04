@@ -41,10 +41,10 @@ A typical config file would look like:
 {
   "Abbreviations":
   {
-    "gg":  "christian.schladetsch@gmail.com",
-    "vgg": "christian@schladetsch.com",
-    "ph":  "04712341234",
-    "gph": "+61(0)37234524",
+    "g":  "christian.schladetsch@gmail.com",
+    "v": "christian@schladetsch.com",
+    "p":  "04712341234",
+    "gp": "+61(0)37234524",
     "cc":  "1234123412341234",
     "p1": "password",
     "p2": "hunter11",
