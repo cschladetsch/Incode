@@ -21,5 +21,6 @@
         RightDown,
         InsertText,
         Escape,
+        Abbreviate
     }
 }

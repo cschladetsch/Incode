@@ -23,11 +23,11 @@ namespace Incode
     /// </summary>
     public partial class Form1 : Form
     {
-        public float Speed = 300; //250;
-        public float Accel = 12;
-        public float ScrollScale = 0.7f;
-        public float ScrollAccel = 1.15f; // amount of scroll events to make per second
-        public int ScrollAmount = 3;
+        public float Speed => _config.Speed;
+        public float Accel => _config.Accel;
+        public float ScrollScale => _config.ScrollScale;
+        public float ScrollAccel => _config.ScrollAccel;
+        public int ScrollAmount => _config.ScrollAmount;
 
         private bool Abbreviating
         {
@@ -35,7 +35,7 @@ namespace Incode
             set
             {
                 _abbrMode = value;
-                _abbreviation.Clear();
+                _abbreviation = "";
             }
         }
 
@@ -58,20 +58,23 @@ namespace Incode
         // works well for WASD 88-key blank keyboards ;)
         //private const Keys OverrideKey = Keys.OemBackslash;   // for WASD 88-key
         private const Keys _overrideKey = Keys.RControlKey;
-        private const Keys _abbrStartKey = Keys.NumLock;
-        private readonly Dictionary<string, List<Keys>> _abbreviations = new Dictionary<string, List<Keys>>();
-        private readonly List<Keys> _abbreviation = new List<Keys>();
         private const string ConfigFileName = "Config.json";
         private int _inserting;
-        private bool _abbrMode;
         private bool _mouseLeftDown;
         private bool _mouseRightDown;
+        
+        // enter abbreviation mode. press escape to leave
+        private const Keys _abbrStartKey = Keys.Q;
+        private bool _abbrMode;
+        private Dictionary<string, string> _abbreviations = new Dictionary<string,string>();
+        private string _abbreviation;
 
         public Form1()
         {
             InitializeComponent();
             Configure();
             InstallHooks();
+            
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             MinimizeBox = true; 
@@ -100,11 +103,12 @@ namespace Incode
             _keys.Add(Keys.V, new Action(Command.ScrollDown));
             _keys.Add(Keys.Space, new Action(Command.LeftDown));
             _keys.Add(Keys.G, new Action(Command.RightDown));
-            _keys.Add(Keys.RShiftKey, new Action(Command.InsertText));
+            _keys.Add(Keys.Q, new Action(Command.Abbreviate));
+            // _keys.Add(Keys.RShiftKey, new Action(Command.InsertText));
             
-            _abbreviations.Add("christian.schladetsch@gmail.com", new List<Keys>() {Keys.P});
-            _abbreviations.Add("christian@schladetsch.com", new List<Keys>() {Keys.W});
-            _abbreviations.Add("+61(0)476 561 112", new List<Keys>() {Keys.M});
+            // _abbreviations.Add("christian.schladetsch@gmail.com", new List<Keys>() {Keys.P});
+            // _abbreviations.Add("christian@schladetsch.com", new List<Keys>() {Keys.W});
+            // _abbreviations.Add("+61(0)476 561 112", new List<Keys>() {Keys.M});
 
             ReadConfig();
         }
@@ -143,6 +147,7 @@ namespace Incode
                 var button = act.Command == Command.LeftDown || act.Command == Command.RightDown;
                 if (button)
                     continue;
+                
                 if (act.Started > DateTime.MinValue && act.Started < earliest)
                     earliest = act.Started;
             }
@@ -201,17 +206,6 @@ namespace Incode
 
         private void OnKeyDown(object sender, KeyEventArgs e)
         {
-            if (false)
-            {
-                foreach (var ke in Enum.GetValues(typeof(Keys)).Cast<Keys>())
-                {
-                    if (ke == e.KeyCode)
-                    {
-                        Trace("{0}", ke.ToString());
-                    }
-                }
-            }
-
             // we're inserting a text expansion. in this case, we get phony key downs
             // from window's input system. ignore them.
             if (_inserting > 0)
@@ -228,9 +222,18 @@ namespace Incode
                 return;
             }
 
-            if (CheckCompleteAbbreviation(e))
+            switch (CheckCompleteAbbreviation(e))
             {
-                return;
+                case AbbrevResult.Matched:
+                    return;
+                case AbbrevResult.Matching:
+                    return;
+                case AbbrevResult.None:
+                    break;
+                case AbbrevResult.NoMatch:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
 
             if (TestAbbreviationStart(e.KeyCode))
@@ -281,59 +284,59 @@ namespace Incode
             }
         }
 
-        private static int StartsWith<T>(IEnumerable<T> list, IList<T> prefix) where T : IComparable
+        private enum AbbrevResult
         {
-            if (prefix.Count == 0)
-                return -1;
-
-            var n = 0;
-            foreach (var a in list)
-            {
-                if (n >= prefix.Count)
-                    return 0;
-
-                if (!prefix[n++].Equals(a))
-                    return -1;
-            }
-
-            return 1;
+            None,
+            Matched,
+            Matching,
+            NoMatch
         }
 
-        private bool CheckCompleteAbbreviation(KeyEventArgs e)
+        private AbbrevResult CheckCompleteAbbreviation(KeyEventArgs e)
         {
             if (!Abbreviating)
-                return false;
-
-            _abbreviation.Add(e.KeyCode);
+                return AbbrevResult.None;
+            
+            // append char from keycode
+            var kc = new KeysConverter();
+            var keyChar = kc.ConvertToString(e.KeyData);
+            _abbreviation += keyChar;
 
             // check for an abbreviation being completed
             foreach (var kv in _abbreviations)
             {
                 Eat(e);
 
-                var test = StartsWith(kv.Value, _abbreviation);
+                var test = CheckAbbrev(kv.Key);
                 switch (test)
                 {
-                    case 0:
-                        Trace("Prefix matches so far");
+                    case AbbrevResult.Matching:
+                        Trace($"Prefix {kv.Key} matches so far");
                         SystemSounds.Asterisk.Play();
-                        return true;
+                        return test;
 
-                    case 1:
-                        Trace("Inserting: '{0}'", kv.Value);
+                    case AbbrevResult.Matched:
+                        Trace($"Inserting: {kv.Key} -> {kv.Value}");
                         SystemSounds.Hand.Play();
                         _inserting = kv.Key.Length;
 
-                        _keyboardOut.TextEntry(kv.Key);
+                        _keyboardOut.TextEntry(kv.Value);
                         Abbreviating = false;
-                        return true;
+                        return test;
                 }
             }
 
+            Trace($"No abbrev found for {_abbreviation}");
             SystemSounds.Beep.Play();
             Abbreviating = false;
+            return AbbrevResult.NoMatch;
+        }
 
-            return false;
+        private AbbrevResult CheckAbbrev(string key)
+        {
+            if (_abbreviation == key)
+                return AbbrevResult.Matched;
+            return key.StartsWith(_abbreviation) ? AbbrevResult.Matching : AbbrevResult.NoMatch;
         }
 
         /// <summary>
@@ -370,6 +373,7 @@ namespace Incode
                     _mouseOut.LeftButtonUp();
                     _mouseLeftDown = false;
                 }
+                
                 if (_mouseRightDown)
                 {
                     _mouseOut.RightButtonUp();
@@ -457,7 +461,7 @@ namespace Incode
             }
         }
 
-        void ResetMouseFilter()
+        private void ResetMouseFilter()
         {
             Trace("MouseCursor: {0}", Cursor.Position);
             _mx.Set(Cursor.Position.X);
@@ -476,18 +480,26 @@ namespace Incode
             WriteConfig();
         }
 
+        struct ConfigData
+        {
+            public Dictionary<string, string> Abbreviations;
+            public float Speed;
+            public float Accel;
+            public float ScrollScale;
+            public float ScrollAccel;
+            public int ScrollAmount;
+        }
+
+        private ConfigData _config;
+
         private void ReadConfig()
         {
+            Trace($"{Directory.GetCurrentDirectory()}");
+            
             if (File.Exists(ConfigFileName))
             {
-                dynamic cfg = JsonConvert.DeserializeObject(System.IO.File.ReadAllText(ConfigFileName));
-                if (cfg != null)
-                {
-                    Speed = cfg.Speed;
-                    Accel = cfg.Accel;
-                    ScrollScale = cfg.ScrollScale;
-                    ScrollAccel = cfg.ScrollAccel;
-                }
+                var text = File.ReadAllText(ConfigFileName);
+                _config = JsonConvert.DeserializeObject<ConfigData>(text);
             }
 
             UpdateUi();
@@ -495,17 +507,7 @@ namespace Incode
 
         private void WriteConfig()
         {
-            var json = new
-            {
-                Speed,
-                Accel,
-                ScrollScale,
-                ScrollAccel,
-                ScrollAmount,
-            };
-            File.WriteAllText(ConfigFileName, JsonConvert.SerializeObject(json));
-
-            // TODO: abbreviations
+            File.WriteAllText(ConfigFileName, JsonConvert.SerializeObject(_config));
         }
 
         private void UpdateUi()
@@ -520,18 +522,18 @@ namespace Incode
         }
         
         private void _scrollAccelText_Leave(object sender, EventArgs e)
-            => WriteValue(f => ScrollAccel = f, _scrollAccelText);
+            => WriteValue(f => _config.ScrollAccel = f, _scrollAccelText);
 
         private void _scrollScaleText_Leave(object sender, EventArgs e)
-            => WriteValue(f => ScrollScale = f, _scrollScaleText);
+            => WriteValue(f => _config.ScrollScale = f, _scrollScaleText);
 
         private void _scrollAmountText_Leave(object sender, EventArgs e)
-            => WriteValue(f => ScrollAmount = (int)f, _scrollAmount);
+            => WriteValue(f => _config.ScrollAmount = (int)f, _scrollAmount);
 
         private void _accelText_Leave(object sender, EventArgs e)
-            => WriteValue(f => Accel = f, _accelText);
+            => WriteValue(f => _config.Accel = f, _accelText);
 
         private void _speedText_Leave(object sender, EventArgs e)
-            => WriteValue(f => Speed = f, _speedText);
+            => WriteValue(f => _config.Speed = f, _speedText);
     }
 }
