@@ -37,6 +37,21 @@ namespace Incode
                 _abbreviation = "";
             }
         }
+        
+        private bool Controlled
+        {
+            get => _controlled;
+            set
+            {
+                _controlled = value;
+                _timer.Enabled = value;
+                if (value)
+                    _controlStartTime = DateTime.Now;
+                else
+                    _mouseOut.LeftButtonUp();
+                ResetMouseFilter();
+            }
+        }
 
         private KeyboardHookListener _keyboardIn;
         private MouseHookListener _mouseIn;
@@ -66,6 +81,7 @@ namespace Incode
         private const Keys _abbrStartKey = Keys.Q;
         private bool _abbrMode;
         private string _abbreviation;
+        private ConfigData _config;
 
         public Form1()
         {
@@ -128,33 +144,55 @@ namespace Incode
 
         private void PerformCommands(object sender, EventArgs e)
         {
-            var dt = _watch.ElapsedMilliseconds / 1000.0f;
+            var dt = _watch.ElapsedMilliseconds/1000.0f;
             _watch.Restart();
 
             var now = DateTime.Now;
-            var earliest = DateTime.MaxValue;
+            var earliest = ButtonsDown(DateTime.MaxValue);
 
-            // only used for cursor-movement keys
+            // for mouse movement
+            var millis = (float) (now - earliest).TotalMilliseconds;
+            var scale = Accel*millis/1000.0f;
+            var delta = dt*Speed*scale;
+
+            PerformActions(now, delta);
+
+            MoveMouse();
+        }
+
+        private DateTime ButtonsDown(DateTime earliest)
+        {
             foreach (var action in _keys)
             {
                 var act = action.Value;
                 var button = act.Command == Command.LeftDown || act.Command == Command.RightDown;
                 if (button)
                     continue;
-                
+
                 if (act.Started > DateTime.MinValue && act.Started < earliest)
                     earliest = act.Started;
             }
 
-            // for mouse movement
-            var millis = (float) (now - earliest).TotalMilliseconds;
-            var scale = Accel * millis / 1000.0f;
-            var delta = dt * Speed * scale;
+            return earliest;
+        }
 
+        private void MoveMouse()
+        {
+            // for accuracy, keep track of desired location in floats, and get nearest integer to set
+            // allow for negative values correctly, as we all have multiple monitors!
+            var fx = _mx.Next(_tx);
+            var fy = _my.Next(_ty);
+            var nx = (int) (fx < 0 ? (fx - 0.5f) : (fx + 0.5f));
+            var ny = (int) (fy < 0 ? (fy - 0.5f) : (fy + 0.5f));
+
+            Cursor.Position = new Point(nx, ny);
+        }
+
+        private void PerformActions(DateTime now, float delta)
+        {
             foreach (var action in _keys)
             {
                 var act = action.Value;
-
                 if (act.Started == DateTime.MinValue)
                     continue;
 
@@ -185,17 +223,6 @@ namespace Incode
                         break;
                 }
             }
-
-            // TODO: clip against cursor bounds. not as trivial as it seems, due to multiple monitor configurations
-            var fx = _mx.Next(_tx);
-            var fy = _my.Next(_ty);
-
-            // for accuracy, keep track of desired location in floats, and get nearest integer to set
-            // allow for negative values correctly, as we all have multiple monitors!
-            var nx = (int) (fx < 0 ? (fx - 0.5f) : (fx + 0.5f));
-            var ny = (int) (fy < 0 ? (fy - 0.5f) : (fy + 0.5f));
-
-            Cursor.Position = new Point(nx, ny);
         }
 
         private void OnKeyDown(object sender, KeyEventArgs e)
@@ -278,40 +305,31 @@ namespace Incode
             }
         }
 
-        private enum AbbrevResult
-        {
-            None,
-            Matched,
-            Matching,
-            NoMatch
-        }
-
         private AbbrevResult CheckCompleteAbbreviation(KeyEventArgs e)
         {
             if (!Abbreviating)
                 return AbbrevResult.None;
             
             // append char from keycode
-            var kc = new KeysConverter();
-            var keyChar = kc.ConvertToString(e.KeyData)?.ToLower();
-            _abbreviation += keyChar;
+            _abbreviation += new KeysConverter().ConvertToString(e.KeyData)?.ToLower();
+            
+            // eat the part of the abbreviation, even if it fails
+            Eat(e);
 
             // check for an abbreviation being completed
             foreach (var kv in _config.Abbreviations)
             {
-                Eat(e);
-
                 var test = CheckAbbrev(kv.Key);
                 switch (test)
                 {
                     case AbbrevResult.Matching:
                         Trace($"Prefix {kv.Key} matches so far");
-                        //SystemSounds.Asterisk.Play();
+                        SystemSounds.Asterisk.Play();
                         return test;
 
                     case AbbrevResult.Matched:
                         Trace($"Inserting: {kv.Key} -> {kv.Value}");
-                        //SystemSounds.Hand.Play();
+                        SystemSounds.Exclamation.Play();
                         _inserting = kv.Value.Length;
 
                         _keyboardOut.TextEntry(kv.Value);
@@ -321,8 +339,9 @@ namespace Incode
             }
 
             Trace($"No abbrev found for {_abbreviation}");
-            //SystemSounds.Beep.Play();
+            SystemSounds.Hand.Play();
             Abbreviating = false;
+            
             return AbbrevResult.NoMatch;
         }
 
@@ -357,10 +376,8 @@ namespace Incode
         }
 
         private static void Trace(string fmt, params object[] args)
-        {
-            Debug.WriteLine(string.Format(fmt, args));
-        }
-        
+            => Debug.WriteLine(string.Format(fmt, args));
+
         private void OnKeyUp(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == _overrideKey)
@@ -443,41 +460,21 @@ namespace Incode
             Controlled = true;
         }
 
-        private bool Controlled
-        {
-            get { return _controlled; }
-            set
-            {
-                _controlled = value;
-                _timer.Enabled = value;
-                if (value)
-                    _controlStartTime = DateTime.Now;
-                else
-                    _mouseOut.LeftButtonUp();
-                ResetMouseFilter();
-            }
-        }
-
         private void ResetMouseFilter()
         {
-            Trace("MouseCursor: {0}", Cursor.Position);
+            //Trace("MouseCursor: {0}", Cursor.Position);
             _mx.Set(Cursor.Position.X);
             _my.Set(Cursor.Position.Y);
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            // TODO: reset key state
-            Application.Exit();
-        }
+            => Application.Exit();
 
         private void WriteValue(Action<float> write, TextBox text)
         {
             write(float.Parse(text.Text));
             WriteConfig();
         }
-
-        private ConfigData _config;
 
         private void ReadConfig()
         {
@@ -497,11 +494,6 @@ namespace Incode
             UpdateUi();
         }
 
-        private void WriteConfig()
-        {
-            File.WriteAllText(ConfigFileName, JsonConvert.SerializeObject(_config));
-        }
-
         private void UpdateUi()
         {
             _speedText.Text = Speed.ToString();
@@ -509,10 +501,11 @@ namespace Incode
             _scrollAccelText.Text = ScrollAccel.ToString();
             _scrollScaleText.Text = ScrollScale.ToString();
             _scrollAmount.Text = ScrollAmount.ToString();
-
-            // TODO: abbreviations
         }
-        
+
+        private void WriteConfig()
+            => File.WriteAllText(ConfigFileName, JsonConvert.SerializeObject(_config));
+
         private void _scrollAccelText_Leave(object sender, EventArgs e)
             => WriteValue(f => _config.ScrollAccel = f, _scrollAccelText);
 
