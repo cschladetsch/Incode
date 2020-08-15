@@ -38,6 +38,7 @@ namespace Incode
             }
         }
         
+        // true if this app is interpreting and controlling input
         private bool Controlled
         {
             get => _controlled;
@@ -45,10 +46,12 @@ namespace Incode
             {
                 _controlled = value;
                 _timer.Enabled = value;
+
                 if (value)
                     _controlStartTime = DateTime.Now;
                 else
                     _mouseOut.LeftButtonUp();
+
                 ResetMouseFilter();
             }
         }
@@ -444,7 +447,7 @@ namespace Incode
             var delta = DateTime.Now - _controlStartTime;
             if (delta.TotalMilliseconds < 300)
             {
-                Trace("Double click control");
+                //Trace("Double click control");
 
                 // TODO: move cursor to center of current display
                 var screen = Screen.FromPoint(Cursor.Position);
@@ -479,7 +482,7 @@ namespace Incode
         private void ReadConfig()
         {
             var cfg = Path.Combine(Directory.GetCurrentDirectory(), ConfigFileName);
-            Trace($"Reading from {cfg}");
+            //Trace($"Reading from {cfg}");
             
             if (File.Exists(cfg))
             {
