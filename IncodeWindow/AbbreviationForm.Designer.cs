@@ -56,7 +56,6 @@
             this._abbrList.TabIndex = 0;
             this._abbrList.UseCompatibleStateImageBehavior = false;
             this._abbrList.View = System.Windows.Forms.View.Details;
-            this._abbrList.SelectedIndexChanged += new System.EventHandler(this._abbrList_SelectedIndexChanged);
             // 
             // Keys
             // 
