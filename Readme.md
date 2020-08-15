@@ -16,7 +16,7 @@ For instance, press and hold the `Interrupt` button, and:
 * The `space bar` simulates the left mouse button
 * `G` the right mouse button.
 * You can also double-click. I think the threshold is 300ms.
-
+* Double-pressing the `Interrupt` key centers the cursor on the main monitor.
 There is some customisation available via a simple GUI, but to change the keys the only current way is to just edit the code.
 
 ## Installation
@@ -41,6 +41,7 @@ A typical config file would look like:
 A
 
 ```json
+A
 {
   "Abbreviations":
   {
