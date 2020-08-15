@@ -17,7 +17,8 @@ For instance, press and hold the `Interrupt` button, and:
 * `G` the right mouse button.
 * You can also double-click. I think the threshold is 300ms.
 * Double-pressing the `Interrupt` key centers the cursor on the main monitor.
-There is some customisation available via a simple GUI, but to change the keys the only current way is to just edit the code.
+* There is some customisation available via a simple GUI, but to change the keys the only current way is to just edit the code.
+
 
 ## Installation
 This project uses submodules, so you have to include them too:
