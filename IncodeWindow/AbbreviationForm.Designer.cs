@@ -1,6 +1,6 @@
 ﻿namespace IncodeWindow
 {
-    partial class Form2
+    partial class AbbreviationForm
     {
         /// <summary>
         /// Required designer variable.
@@ -35,47 +35,51 @@
             "Two",
             "Foo"}, -1);
             this._abbrList = new System.Windows.Forms.ListView();
-            this.Abbr = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.Keys = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.Expand = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.SuspendLayout();
             // 
             // _abbrList
             // 
             this._abbrList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.Abbr,
+            this.Keys,
             this.Expand});
             this._abbrList.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._abbrList.GridLines = true;
             this._abbrList.HideSelection = false;
             this._abbrList.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
             listViewItem1,
             listViewItem2});
             this._abbrList.Location = new System.Drawing.Point(0, 0);
             this._abbrList.Name = "_abbrList";
-            this._abbrList.Size = new System.Drawing.Size(299, 136);
+            this._abbrList.Size = new System.Drawing.Size(330, 181);
             this._abbrList.TabIndex = 0;
             this._abbrList.UseCompatibleStateImageBehavior = false;
             this._abbrList.View = System.Windows.Forms.View.Details;
-            this._abbrList.SelectedIndexChanged += new System.EventHandler(this.listView1_SelectedIndexChanged);
+            this._abbrList.SelectedIndexChanged += new System.EventHandler(this._abbrList_SelectedIndexChanged);
             // 
-            // Abbr
+            // Keys
             // 
-            this.Abbr.Text = "Abbr";
-            this.Abbr.Width = 73;
+            this.Keys.Text = "Keys";
+            this.Keys.Width = 73;
             // 
             // Expand
             // 
-            this.Expand.Text = "Expand";
+            this.Expand.Text = "Result";
             this.Expand.Width = 243;
             // 
-            // Form2
+            // AbbreviationForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(299, 136);
+            this.ClientSize = new System.Drawing.Size(330, 181);
             this.ControlBox = false;
             this.Controls.Add(this._abbrList);
-            this.Name = "Form2";
+            this.Enabled = false;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.Name = "AbbreviationForm";
             this.ShowIcon = false;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "Macro";
             this.TopMost = true;
             this.ResumeLayout(false);
@@ -85,7 +89,7 @@
         #endregion
 
         private System.Windows.Forms.ListView _abbrList;
-        private System.Windows.Forms.ColumnHeader Abbr;
+        private System.Windows.Forms.ColumnHeader Keys;
         private System.Windows.Forms.ColumnHeader Expand;
     }
 }
