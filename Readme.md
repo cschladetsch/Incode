@@ -32,10 +32,13 @@ For instance, my email address is `christian@schladetsch.com`. I end up typing t
 
 The `g` is the abbreviation stored in the Json file. I've added a bunch of things I use a lot, like passwords etc. Obviously you'll have to make your own Config.json in the same folder as the IncodeWindow.exe executable.
 
+When you enter abbreviation mode, a popup appears showing all your abbreviations. Note that you need to still hold down the `Interrupt` key to complete the abbreviation.
+
 ## Json Config
 The configuration is stored in Config.json, in the same folder as the app.
 
 A typical config file would look like:
+A
 
 ```json
 {
