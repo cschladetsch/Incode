@@ -5,9 +5,9 @@
     /// <summary>
     /// Configuration for the app. Stored as a Json file.
     ///
-    /// Be careful to avoid putting sensitive data into Abbreviations in the repo.
-    ///
-    /// TODO: Store abbreviations in a separate file.
+    /// For security reasons, the underlying datafile is not stored in the repo.
+    /// This is because it is intended to store things like passwords and credit-card details.
+    /// 
     /// </summary>
     internal struct ConfigData
     {
@@ -17,5 +17,7 @@
         public float ScrollScale;
         public float ScrollAccel;
         public int ScrollAmount;
+        public float MouseFilterResonance;
+        public float MouseFilterFrequency;
     }
 }

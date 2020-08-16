@@ -30,6 +30,8 @@ namespace Incode
         public float ScrollScale => _config.ScrollScale;
         public float ScrollAccel => _config.ScrollAccel;
         public int ScrollAmount => _config.ScrollAmount;
+        public float FilterRes => _config.MouseFilterResonance;
+        public float FilterFreq => _config.MouseFilterFrequency;
 
         private bool Abbreviating
         {
@@ -73,8 +75,8 @@ namespace Incode
         private const float Frequency = 100.0f; // Hertz
         private Timer _timer;
         private float _tx, _ty; // the target mouse position
-        private readonly LowPass _mx = new LowPass(Frequency, 1000, 2); // the filtered mouse position
-        private readonly LowPass _my = new LowPass(Frequency, 1000, 2);
+        private LowPass _mx = new LowPass(Frequency, 2000, 2.5f);
+        private LowPass _my = new LowPass(Frequency, 2000, 2.5f);
         private readonly Dictionary<Keys, Action> _keys = new Dictionary<Keys, Action>();
         private readonly Stopwatch _watch = new Stopwatch();
         private DateTime _controlStartTime;
@@ -141,13 +143,13 @@ namespace Incode
             _mouseOut = _inputSimulator.Mouse;
             _keyboardOut = _inputSimulator.Keyboard;
 
-            _mouseIn = new MouseHookListener(new GlobalHooker()) { Enabled = true };
-            _keyboardIn = new KeyboardHookListener(new GlobalHooker()) { Enabled = true };
+            _mouseIn = new MouseHookListener(new GlobalHooker()) {Enabled = true};
+            _keyboardIn = new KeyboardHookListener(new GlobalHooker()) {Enabled = true};
 
             _keyboardIn.KeyDown += OnKeyDown;
             _keyboardIn.KeyUp += OnKeyUp;
 
-            _timer = new Timer { Interval = (int)(1000 / Frequency) };
+            _timer = new Timer {Interval = (int) (1000 / Frequency)};
             _timer.Tick += PerformCommands;
 
             _watch.Start();
@@ -162,7 +164,7 @@ namespace Incode
             var earliest = ButtonsDown(DateTime.MaxValue);
 
             // for mouse movement
-            var millis = (float)(now - earliest).TotalMilliseconds;
+            var millis = (float) (now - earliest).TotalMilliseconds;
             var scale = Accel * millis / 1000.0f;
             var delta = dt * Speed * scale;
 
@@ -189,12 +191,12 @@ namespace Incode
 
         private void MoveMouse()
         {
-            // for accuracy, keep track of desired location in floats, and get nearest integer to set
-            // allow for negative values correctly, as we all have multiple monitors!
+            // For accuracy, keep track of desired location in floats, and get nearest integer to set.
+            // Allow for negative values correctly, as we all have multiple monitors!
             var fx = _mx.Next(_tx);
             var fy = _my.Next(_ty);
-            var nx = (int)(fx < 0 ? (fx - 0.5f) : (fx + 0.5f));
-            var ny = (int)(fy < 0 ? (fy - 0.5f) : (fy + 0.5f));
+            var nx = (int) (fx < 0 ? (fx - 0.5f) : (fx + 0.5f));
+            var ny = (int) (fy < 0 ? (fy - 0.5f) : (fy + 0.5f));
 
             Cursor.Position = new Point(nx, ny);
         }
@@ -210,7 +212,7 @@ namespace Incode
                 // for vertical scroll
                 var ts = (now - act.Started).TotalSeconds;
                 var accel = 1 + ScrollAccel * ts;
-                var t = (int)(ts * accel * ScrollScale);
+                var t = (int) (ts * accel * ScrollScale);
 
                 switch (act.Command)
                 {
@@ -238,15 +240,15 @@ namespace Incode
 
         public void OnKeyDown(object sender, KeyEventArgs e)
         {
-            // we're inserting a text expansion. in this case, we get phony key downs
-            // from window's input system. ignore them.
+            // We're inserting a text expansion. in this case, we get phony key downs.
+            // From window's input system. ignore them.
             if (_inserting > 0)
             {
                 _inserting--;
                 return;
             }
 
-            // if we're in the middle of an abbreviation, stop it
+            // If we're in the middle of an abbreviation, stop it.
             if (e.KeyCode == Keys.Escape && Abbreviating)
             {
                 Abbreviating = false;
@@ -291,7 +293,7 @@ namespace Incode
             if (!_keys.ContainsKey(e.KeyCode))
                 return;
 
-            // we get repeated key-down events - only set it the first time we get a key-down
+            // We get repeated key-down events - only set it the first time we get a key-down.
             var action = _keys[e.KeyCode];
             if (action.Started != DateTime.MinValue)
                 return;
@@ -325,12 +327,12 @@ namespace Incode
 
         private void ShowAbbreviations()
         {
-            // need to show a window of available abbreviations, but want all subsequent input to
+            // Need to show a window of available abbreviations, but want all subsequent input to
             // be sent to current (native) control.
             var current = GetForegroundWindow();
             var cp = Cursor.Position;
             _abbrevWindow?.Close();
-            _abbrevWindow = new AbbreviationForm(this) { Location = new Point(cp.X + 20, cp.Y - 20) };
+            _abbrevWindow = new AbbreviationForm(this) {Location = new Point(cp.X + 20, cp.Y - 20)};
             _abbrevWindow.Populate(_config.Abbreviations);
             _abbrevWindow.Show();
             SetForegroundWindow(current);
@@ -341,13 +343,13 @@ namespace Incode
             if (!Abbreviating)
                 return AbbrevResult.None;
 
-            // append char from keycode
+            // Append char from keycode.
             _abbreviation += new KeysConverter().ConvertToString(e.KeyData)?.ToLower();
 
-            // eat the part of the abbreviation, even if it fails
+            // Eat the part of the abbreviation, even if it fails.
             Eat(e);
 
-            // check for an abbreviation being completed
+            // Check for an abbreviation being completed.
             foreach (var kv in _config.Abbreviations)
             {
                 var test = CheckAbbrev(kv.Key);
@@ -438,12 +440,12 @@ namespace Incode
             if (!_keys.ContainsKey(e.KeyCode))
                 return;
 
-            // sentinel values are bad. I use one here to indicate that an action is not active.
+            // Sentinel values are bad. I use one here to indicate that an action is not active.
             _keys[e.KeyCode].Started = DateTime.MinValue;
 
             Eat(e);
 
-            // there is a better way
+            // TODO There is a better way!
             switch (e.KeyCode)
             {
                 case Keys.G:
@@ -495,17 +497,16 @@ namespace Incode
             Controlled = false;
             _timer.Enabled = false;
             _watch.Restart();
+
+            ResetMouseFilter();
         }
 
         private void ResetMouseFilter()
         {
-            //Trace("MouseCursor: {0}", Cursor.Position);
+            Trace("MouseCursor: {0}", Cursor.Position);
             _mx.Set(Cursor.Position.X);
             _my.Set(Cursor.Position.Y);
         }
-
-        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
-            => Application.Exit();
 
         private void WriteValue(Action<float> write, TextBox text)
         {
@@ -515,17 +516,12 @@ namespace Incode
 
         private void ReadConfig()
         {
-            var cfg = Path.Combine(Directory.GetCurrentDirectory(), ConfigFileName);
-            //Trace($"Reading from {cfg}");
+            var configFileName = Path.Combine(Directory.GetCurrentDirectory(), ConfigFileName);
 
-            if (File.Exists(cfg))
+            if (File.Exists(configFileName))
             {
-                var text = File.ReadAllText(cfg);
+                var text = File.ReadAllText(configFileName);
                 _config = JsonConvert.DeserializeObject<ConfigData>(text);
-                foreach (var ab in _config.Abbreviations)
-                {
-                    Trace($"{ab.Key} => {ab.Value}");
-                }
             }
 
             UpdateUi();
@@ -538,6 +534,8 @@ namespace Incode
             _scrollAccelText.Text = ScrollAccel.ToString();
             _scrollScaleText.Text = ScrollScale.ToString();
             _scrollAmount.Text = ScrollAmount.ToString();
+            _filterFreq.Text = FilterFreq.ToString();
+            _filterRes.Text = FilterRes.ToString();
         }
 
         private void WriteConfig()
@@ -550,12 +548,34 @@ namespace Incode
             => WriteValue(f => _config.ScrollScale = f, _scrollScaleText);
 
         private void _scrollAmountText_Leave(object sender, EventArgs e)
-            => WriteValue(f => _config.ScrollAmount = (int)f, _scrollAmount);
+            => WriteValue(f => _config.ScrollAmount = (int) f, _scrollAmount);
 
         private void _accelText_Leave(object sender, EventArgs e)
             => WriteValue(f => _config.Accel = f, _accelText);
 
         private void _speedText_Leave(object sender, EventArgs e)
             => WriteValue(f => _config.Speed = f, _speedText);
+
+        private void _filterFreq_Leave(object sender, EventArgs e)
+        {
+            WriteValue(f => _config.MouseFilterFrequency = f, _filterFreq);
+            UpdateMouseFilter();
+        }
+
+        private void _filterRes_Leave(object sender, EventArgs e)
+        {
+            WriteValue(f => _config.MouseFilterResonance = f, _filterRes);
+            UpdateMouseFilter();
+        }
+
+        private void UpdateMouseFilter()
+        {
+            _mx = new LowPass(Frequency, _config.MouseFilterFrequency, _config.MouseFilterResonance);
+            _my = new LowPass(Frequency, _config.MouseFilterFrequency, _config.MouseFilterResonance);
+            ResetMouseFilter();
+        }
+
+        private void _exitToolStripMenuItem_Click(object sender, EventArgs e)
+            => Application.Exit();
     }
 }

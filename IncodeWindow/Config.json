@@ -1,0 +1,18 @@
+{
+  "Abbreviations": {
+    "m1": "christian.schladetsch@gmail.com",
+    "m2": "christian@schladetsch.com",
+    "ph1": "0476561112",
+    "ph2": "+61 476561112",
+    "cc": "4017954076285395",
+    "p1": "Sp4mfilt3r$$",
+    "p2": "Chr1st14n$$"
+  },
+  "Speed": 300.0,
+  "Accel": 15.0,
+  "ScrollScale": 0.5,
+  "ScrollAccel": 0.85,
+  "ScrollAmount": 3,
+  "MouseFilterResonance": 3.5,
+  "MouseFilterFrequency":  2500
+}
