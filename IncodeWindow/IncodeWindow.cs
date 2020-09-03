@@ -442,6 +442,7 @@ namespace Incode
                 Controlled = false;
                 Trace("Not controlling");
                 _abbrevWindow?.Close();
+                Abbreviating = false;
                 return;
             }
 
