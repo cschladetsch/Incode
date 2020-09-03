@@ -52,7 +52,7 @@
             listViewItem2});
             this._abbrList.Location = new System.Drawing.Point(0, 0);
             this._abbrList.Name = "_abbrList";
-            this._abbrList.Size = new System.Drawing.Size(330, 181);
+            this._abbrList.Size = new System.Drawing.Size(333, 308);
             this._abbrList.TabIndex = 0;
             this._abbrList.UseCompatibleStateImageBehavior = false;
             this._abbrList.View = System.Windows.Forms.View.Details;
@@ -71,7 +71,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(330, 181);
+            this.ClientSize = new System.Drawing.Size(333, 308);
             this.ControlBox = false;
             this.Controls.Add(this._abbrList);
             this.Enabled = false;
