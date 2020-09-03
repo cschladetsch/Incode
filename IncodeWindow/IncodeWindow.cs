@@ -97,6 +97,15 @@ namespace Incode
         private ConfigData _config;
         private AbbreviationForm _abbrevWindow;
 
+        private void PlaySound(string name)
+        {
+            var docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            var effects = Path.Combine(docs, "SoundBoard");
+            var sfx = Path.Combine(effects, name);
+            var player = new SoundPlayer(sfx);
+            player.Play();
+        }
+
         public IncodeWindow()
         {
             InitializeComponent();
@@ -258,14 +267,18 @@ namespace Incode
 
             switch (CheckCompleteAbbreviation(e))
             {
-                case AbbrevResult.Matched:
-                    return;
                 case AbbrevResult.Matching:
+                    PlaySound("MacroCorrect.wav");
+                    return;
+                case AbbrevResult.NoMatch:
+                    PlaySound("MacroFailed.wav");
                     return;
                 case AbbrevResult.None:
+                    //PlaySound("MacroFailed.wav");
                     break;
-                case AbbrevResult.NoMatch:
-                    break;
+                case AbbrevResult.Matched:
+                    PlaySound("MacroSuccess.wav");
+                    return;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -332,7 +345,7 @@ namespace Incode
             var current = GetForegroundWindow();
             var cp = Cursor.Position;
             _abbrevWindow?.Close();
-            _abbrevWindow = new AbbreviationForm(this) {Location = new Point(cp.X + 20, cp.Y - 20)};
+            _abbrevWindow = new AbbreviationForm(this) { Location = new Point(cp.X + 20, cp.Y - 20) };
             _abbrevWindow.Populate(_config.Abbreviations);
             _abbrevWindow.Show();
             SetForegroundWindow(current);
@@ -357,12 +370,10 @@ namespace Incode
                 {
                     case AbbrevResult.Matching:
                         Trace($"Prefix {kv.Key} matches so far");
-                        SystemSounds.Asterisk.Play();
                         return test;
 
                     case AbbrevResult.Matched:
                         Trace($"Inserting: {kv.Key} -> {kv.Value}");
-                        SystemSounds.Exclamation.Play();
                         _inserting = kv.Value.Length;
 
                         _keyboardOut.TextEntry(kv.Value);
@@ -372,7 +383,6 @@ namespace Incode
             }
 
             Trace($"No abbrev found for {_abbreviation}");
-            SystemSounds.Hand.Play();
             Abbreviating = false;
 
             return AbbrevResult.NoMatch;
@@ -404,6 +414,7 @@ namespace Incode
             Abbreviating = true;
 
             Trace("Entering abbreviation mode");
+            PlaySound("MacroStart.wav");
 
             return true;
         }
