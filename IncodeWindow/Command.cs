@@ -21,6 +21,9 @@
         RightDown,
         InsertText,
         Escape,
+        VolumeUp,
+        VolumeDown,
+        VolumeMute,
         Abbreviate
     }
 }

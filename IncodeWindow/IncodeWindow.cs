@@ -1,6 +1,7 @@
 ﻿// (C) 2015-20 christian.schladetsch@gmail.com
 
 using System.Runtime.InteropServices;
+using AudioSwitcher.AudioApi.CoreAudio;
 using IncodeWindow;
 
 namespace Incode
@@ -141,6 +142,9 @@ namespace Incode
             _keys.Add(Keys.G, new Action(Command.RightDown));
             _keys.Add(Keys.Q, new Action(Command.Abbreviate));
             _keys.Add(Keys.Space, new Action(Command.LeftDown));
+            _keys.Add(Keys.D1, new Action(Command.VolumeDown));
+            _keys.Add(Keys.D2, new Action(Command.VolumeUp));
+            _keys.Add(Keys.D3, new Action(Command.VolumeMute));
 
             ReadConfig();
         }
@@ -247,6 +251,12 @@ namespace Incode
             }
         }
 
+        public void DeltaVolume(int amount)
+        {
+            var device = new CoreAudioController().DefaultPlaybackDevice;
+            device.Volume += amount;
+        }
+
         public void OnKeyDown(object sender, KeyEventArgs e)
         {
             // We're inserting a text expansion. in this case, we get phony key downs.
@@ -328,6 +338,15 @@ namespace Incode
                 case Keys.Space:
                     _mouseOut.LeftButtonDown();
                     _mouseLeftDown = true;
+                    break;
+                case Keys.D1:
+                    DeltaVolume(10);
+                    break;
+                case Keys.D2:
+                    DeltaVolume(-10);
+                    break;
+                case Keys.D3:
+                    new CoreAudioController().DefaultPlaybackDevice.ToggleMute();
                     break;
             }
         }

@@ -24,5 +24,9 @@ namespace IncodeWindow
                 _abbrList.Items.Add(sub);
             }
         }
+
+        private void _abbrList_SelectedIndexChanged(object sender, System.EventArgs e)
+        {
+        }
     }
 }

@@ -45,6 +45,7 @@
             this.Keys,
             this.Expand});
             this._abbrList.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._abbrList.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this._abbrList.GridLines = true;
             this._abbrList.HideSelection = false;
             this._abbrList.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
@@ -52,10 +53,11 @@
             listViewItem2});
             this._abbrList.Location = new System.Drawing.Point(0, 0);
             this._abbrList.Name = "_abbrList";
-            this._abbrList.Size = new System.Drawing.Size(333, 308);
+            this._abbrList.Size = new System.Drawing.Size(500, 454);
             this._abbrList.TabIndex = 0;
             this._abbrList.UseCompatibleStateImageBehavior = false;
             this._abbrList.View = System.Windows.Forms.View.Details;
+            this._abbrList.SelectedIndexChanged += new System.EventHandler(this._abbrList_SelectedIndexChanged);
             // 
             // Keys
             // 
@@ -65,13 +67,13 @@
             // Expand
             // 
             this.Expand.Text = "Result";
-            this.Expand.Width = 243;
+            this.Expand.Width = 421;
             // 
             // AbbreviationForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(333, 308);
+            this.ClientSize = new System.Drawing.Size(500, 454);
             this.ControlBox = false;
             this.Controls.Add(this._abbrList);
             this.Enabled = false;
