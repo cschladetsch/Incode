@@ -8,7 +8,7 @@ This application allows the user to control the mouse and other systems such as 
 ## Usage
 Hold an 'Interrupt' button - By default the Right-Control key - and then use the rest of the keyboard to send custom input.
 
-Use the provided `SharpKeys` binary to remap the CapsLock key to the Right-Control Key. The CapsLock key is an anacronism in any case, may as well put it to good use.
+*NOTE* Use the provided `SharpKeys` binary to remap the CapsLock key to the Right-Control Key. The CapsLock key is an anacronism in any case, may as well put it to good use.
 
 For instance, press and hold the `Interrupt` button, and:
 * use `ESDF` to move the mouse cursor up down left right. Movement is passed through a customised filter to emulate the behavior of an Ibm ThinkPad clit button.  
@@ -21,10 +21,7 @@ For instance, press and hold the `Interrupt` button, and:
 
 
 ## Installation
-This project uses submodules, so you have to include them too:
-```bash
-$ git submodule init --recursive
-```
+Just build the Visual Studio solution. This is very much *not* a cross-platform app so I didn't bother with CMake.
 
 ## Abbreviations
 Enter abbreviation mode with `Interrupt`-Q (typically Capslock-Q). Then you can insert any text as mapped in the config file.
@@ -36,13 +33,11 @@ The `g` is the abbreviation stored in the Json file. I've added a bunch of thing
 When you enter abbreviation mode, a popup appears showing all your abbreviations. Note that you need to still hold down the `Interrupt` key to complete the abbreviation.
 
 ## Json Config
-The configuration is stored in Config.json, in the same folder as the app.
+The configuration is stored in `Config.json`, in the same folder as the app.
 
 A typical config file would look like:
-A
 
 ```json
-A
 {
   "Abbreviations":
   {
@@ -65,6 +60,7 @@ A
 
 ```
 
-## Bugs
-Feel free to [contact me](mailto:christian@schladetsch.com) with comments, suggestions or bugs.
+## Bugs or Requests
+Use GitHub's Issues to raise any faults or feature requests.
 
+Othweose, feel free to [contact me](mailto:christian@schladetsch.com).
