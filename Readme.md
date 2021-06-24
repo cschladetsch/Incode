@@ -6,7 +6,7 @@ Custom input system for keyboard and mouse for Windows.
 This application allows the user to control the mouse and other systems such as cursor and scrolling using a minimal set of keys - without actually using the mouse. It also allows for the use of abbreviations. Yes, there are other tools that do this and better but hey.
 
 ## Usage
-Hold an 'Interrupt' button - By default the Right-Control key - and then use the rest of the keyboard to send custom input.
+Hold an `Interrupt` button - By default the Right-Control key - and then use the rest of the keyboard to send custom input.
 
 *NOTE* Use the provided `SharpKeys` binary to remap the CapsLock key to the Right-Control Key. The CapsLock key is an anacronism in any case, may as well put it to good use.
 
@@ -63,4 +63,4 @@ A typical config file would look like:
 ## Bugs or Requests
 Use GitHub's Issues to raise any faults or feature requests.
 
-Othweose, feel free to [contact me](mailto:christian@schladetsch.com).
+Otherwise, feel free to [contact me](mailto:christian@schladetsch.com).
