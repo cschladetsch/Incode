@@ -3,6 +3,7 @@
 using System.Runtime.InteropServices;
 using AudioSwitcher.AudioApi.CoreAudio;
 using IncodeWindow;
+using LedCSharp;
 
 namespace Incode
 {
@@ -64,6 +65,32 @@ namespace Incode
                     _mouseOut.LeftButtonUp();
 
                 ResetMouseFilter();
+
+                // TODO: can't find correct format for dll (although LogiNumLock tool works)
+                //SetKeyboardLights();
+            }
+        }
+
+        private readonly keyboardNames[] _incodeKeys =
+        {
+            keyboardNames.Q,
+            keyboardNames.E,
+            keyboardNames.S,
+            keyboardNames.D,
+            keyboardNames.F,
+            keyboardNames.R,
+            keyboardNames.V,
+            keyboardNames.SPACE,
+        };
+
+        private void SetKeyboardLights()
+        {
+            int r = _controlled ? 255 : 0;
+            int g = _controlled ? 255 : 0;
+            int b = _controlled ? 0 : 255;
+            foreach (var key in _incodeKeys)
+            {
+                LogitechGSDK.LogiLedSetLightingForKeyWithKeyName(key,r,g,b);
             }
         }
 
@@ -116,6 +143,14 @@ namespace Incode
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             MinimizeBox = true;
+
+            //if (!LogitechGSDK.LogiLedInit())
+            //{
+            //    Console.Error.WriteLine("Failed to start LogiTech SDK. Plug in a keyboard or something.");
+            //    return;
+            //}
+
+            //LogitechGSDK.LogiLedSetTargetDevice(LogitechGSDK.LOGI_DEVICETYPE_ALL);e
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
