@@ -288,8 +288,8 @@ namespace Incode
 
         public void DeltaVolume(int amount)
         {
-            var device = new CoreAudioController().DefaultPlaybackDevice;
-            device.Volume += amount;
+            //var device = new CoreAudioController().DefaultPlaybackDevice;
+            //device.Volume += amount;
         }
 
         public void OnKeyDown(object sender, KeyEventArgs e)
@@ -381,7 +381,7 @@ namespace Incode
                     DeltaVolume(-10);
                     break;
                 case Keys.D3:
-                    new CoreAudioController().DefaultPlaybackDevice.ToggleMute();
+                    //new CoreAudioController().DefaultPlaybackDevice.ToggleMute();
                     break;
             }
         }
