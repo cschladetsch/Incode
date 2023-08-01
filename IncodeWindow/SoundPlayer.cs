@@ -5,7 +5,7 @@ using NAudio.Wave;
 
 namespace IncodeWindow {
     internal class Audio {
-        private Dictionary<Keys, BufferedWaveProvider> _sounds = new Dictionary<Keys, BufferedWaveProvider>();
+        private Dictionary<Keys, WaveOut> _sounds = new Dictionary<Keys, WaveOut>();
         private const float SemiToneFactor = 1.05946309436f;
 
         public Audio() {
@@ -19,7 +19,11 @@ namespace IncodeWindow {
             var seconds = 0.300f;
             var sampleRate = 44 * 1000;
             for (int i = 0; i < keys.Length; i++) {
-                _sounds.Add(keys[i], GenerateWaveForm(keys, frequency, seconds, sampleRate, i));
+                var bytes = GenerateWaveForm(keys, frequency, seconds, sampleRate, i);
+                var waveOut = new WaveOut();
+                waveOut.Init(bytes);
+                _sounds.Add(keys[i], waveOut);
+                Console.WriteLine($"Adding {waveOut} to {keys[i]}");
                 frequency *= SemiToneFactor;
             }
         }
@@ -49,12 +53,12 @@ namespace IncodeWindow {
 
         public void KeyDown(KeyEventArgs key) {
             if (!_sounds.TryGetValue(key.KeyCode, out var sound)) {
+                Console.WriteLine($"No audio found for {key.KeyCode}");
                 return;
             }
 
-            var output = new WaveOut();
-            output.Init(sound);
-            output.Play();
+            Console.WriteLine($"Playing {sound}");
+            sound.Play();
         }
     }
 }

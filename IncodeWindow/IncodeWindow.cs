@@ -35,6 +35,8 @@ namespace Incode
         public float FilterRes => _config.MouseFilterResonance;
         public float FilterFreq => _config.MouseFilterFrequency;
 
+        private Audio _audio = new Audio();
+
         private bool Abbreviating
         {
             get => _abbrMode;
@@ -140,6 +142,7 @@ namespace Incode
             Configure();
             InstallHooks();
 
+            this.KeyDown += PlaySound;
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             MinimizeBox = true;
@@ -151,6 +154,10 @@ namespace Incode
             //}
 
             //LogitechGSDK.LogiLedSetTargetDevice(LogitechGSDK.LOGI_DEVICETYPE_ALL);e
+        }
+
+        void PlaySound(object sender, KeyEventArgs key) {
+            _audio.KeyDown(key);
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
@@ -292,12 +299,8 @@ namespace Incode
             //device.Volume += amount;
         }
 
-        Audio _audio = new Audio();
-
         public void OnKeyDown(object sender, KeyEventArgs e)
         {
-            _audio.KeyDown(e);
-
             // We're inserting a text expansion. in this case, we get phony key downs.
             // From window's input system. ignore them.
             if (_inserting > 0)
