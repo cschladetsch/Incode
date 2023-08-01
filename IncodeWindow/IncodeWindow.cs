@@ -292,8 +292,12 @@ namespace Incode
             //device.Volume += amount;
         }
 
+        Audio _audio = new Audio();
+
         public void OnKeyDown(object sender, KeyEventArgs e)
         {
+            _audio.KeyDown(e);
+
             // We're inserting a text expansion. in this case, we get phony key downs.
             // From window's input system. ignore them.
             if (_inserting > 0)
