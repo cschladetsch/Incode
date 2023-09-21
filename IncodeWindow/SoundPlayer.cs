@@ -5,7 +5,7 @@ using NAudio.Wave;
 
 namespace IncodeWindow {
     internal class Audio {
-        private Dictionary<Keys, WaveOut> _sounds = new Dictionary<Keys, WaveOut>();
+        private Dictionary<Keys, BufferedWaveProvider> _sounds = new Dictionary<Keys, BufferedWaveProvider>();
         private const float SemiToneFactor = 1.05946309436f;
 
         public Audio() {
@@ -22,7 +22,7 @@ namespace IncodeWindow {
                 var bytes = GenerateWaveForm(keys, frequency, seconds, sampleRate, i);
                 var waveOut = new WaveOut();
                 waveOut.Init(bytes);
-                _sounds.Add(keys[i], waveOut);
+                _sounds.Add(keys[i], GenerateWaveForm(keys, frequency, seconds, sampleRate, i));
                 Console.WriteLine($"Adding {waveOut} to {keys[i]}");
                 frequency *= SemiToneFactor;
             }
@@ -52,13 +52,29 @@ namespace IncodeWindow {
         }
 
         public void KeyDown(KeyEventArgs key) {
-            if (!_sounds.TryGetValue(key.KeyCode, out var sound)) {
+            if (!_sounds.TryGetValue(key.KeyCode, out var source)) {
                 Console.WriteLine($"No audio found for {key.KeyCode}");
                 return;
             }
 
-            Console.WriteLine($"Playing {sound}");
-            sound.Play();
+            Console.WriteLine($"Playing {source}");
+            WaveOutEvent waveOut = new WaveOutEvent();
+            waveOut.Init(source);
+            waveOut.Play();
+            waveOut.PlaybackStopped += WaveOut_PlaybackStopped1;
+            waveOut.PlaybackStopped += AddStopHandler(sender, args, waveOut, source);
+        }
+
+        private void WaveOut_PlaybackStopped1(object sender, StoppedEventArgs e) {
+            throw new NotImplementedException();
+        }
+
+        void AddStopHandler(object sender, EventArgs e, WaveOutEvent waveOut, BufferedWaveProvider source) {
+            source.ClearBuffer();
+        }
+
+        private void WaveOut_PlaybackStopped(object sender, StoppedEventArgs e) {
+            throw new NotImplementedException();
         }
     }
 }
