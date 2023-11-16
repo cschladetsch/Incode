@@ -76,12 +76,12 @@ namespace Incode
         private readonly keyboardNames[] _incodeKeys =
         {
             keyboardNames.Q,
-            keyboardNames.E,
+            keyboardNames.W,
+            keyboardNames.A,
             keyboardNames.S,
             keyboardNames.D,
-            keyboardNames.F,
-            keyboardNames.R,
-            keyboardNames.V,
+            keyboardNames.E,
+            keyboardNames.C,
             keyboardNames.SPACE,
         };
 
@@ -132,6 +132,8 @@ namespace Incode
             var docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             var effects = Path.Combine(docs, "SoundBoard");
             var sfx = Path.Combine(effects, name);
+            if (!File.Exists(sfx))
+                return;
             var player = new SoundPlayer(sfx);
             player.Play();
         }
@@ -145,14 +147,6 @@ namespace Incode
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             MinimizeBox = true;
-
-            //if (!LogitechGSDK.LogiLedInit())
-            //{
-            //    Console.Error.WriteLine("Failed to start LogiTech SDK. Plug in a keyboard or something.");
-            //    return;
-            //}
-
-            //LogitechGSDK.LogiLedSetTargetDevice(LogitechGSDK.LOGI_DEVICETYPE_ALL);e
         }
 
         void PlaySound(object sender, KeyEventArgs key) {
@@ -173,13 +167,13 @@ namespace Incode
         {
             // clearly, this should be configured via a file, and the UI.
             _keys.Add(Keys.Escape, new Action(Command.Escape));
-            _keys.Add(Keys.E, new Action(Command.Up));
-            _keys.Add(Keys.S, new Action(Command.Left));
-            _keys.Add(Keys.D, new Action(Command.Down));
-            _keys.Add(Keys.F, new Action(Command.Right));
-            _keys.Add(Keys.R, new Action(Command.ScrollUp));
-            _keys.Add(Keys.V, new Action(Command.ScrollDown));
-            _keys.Add(Keys.G, new Action(Command.RightDown));
+            _keys.Add(Keys.W, new Action(Command.Up));
+            _keys.Add(Keys.A, new Action(Command.Left));
+            _keys.Add(Keys.S, new Action(Command.Down));
+            _keys.Add(Keys.D, new Action(Command.Right));
+            _keys.Add(Keys.E, new Action(Command.ScrollUp));
+            _keys.Add(Keys.C, new Action(Command.ScrollDown));
+            _keys.Add(Keys.F, new Action(Command.RightDown));
             _keys.Add(Keys.Q, new Action(Command.Abbreviate));
             _keys.Add(Keys.Space, new Action(Command.LeftDown));
             _keys.Add(Keys.D1, new Action(Command.VolumeDown));

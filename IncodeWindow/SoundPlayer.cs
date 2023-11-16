@@ -18,7 +18,7 @@ namespace IncodeWindow {
             var frequency = 55.0f; // basw freqnecy of A1
             var seconds = 0.300f;
             var sampleRate = 44 * 1000;
-            for (int i = 0; i < keys.Length; i++) {
+            for (var i = 0; i < keys.Length; i++) {
                 var bytes = GenerateWaveForm(keys, frequency, seconds, sampleRate, i);
                 var waveOut = new WaveOut();
                 waveOut.Init(bytes);
@@ -29,9 +29,10 @@ namespace IncodeWindow {
         }
 
         private BufferedWaveProvider GenerateWaveForm(Keys[] keys, float frequency, float seconds, int sampleRate, int i) {
-            var wave = new BufferedWaveProvider(new WaveFormat(sampleRate, 1));
-            wave.BufferLength = (int)(sampleRate / seconds);
-            byte[] bytes = GenerateSignWave(frequency, seconds, sampleRate);
+            var wave = new BufferedWaveProvider(new WaveFormat(sampleRate, 1)) {
+                BufferLength = (int)(sampleRate / seconds)
+            };
+            var bytes = GenerateSignWave(frequency, seconds, sampleRate);
             wave.AddSamples(bytes, 0, bytes.Length);
             return wave;
         }
@@ -61,15 +62,15 @@ namespace IncodeWindow {
             WaveOutEvent waveOut = new WaveOutEvent();
             waveOut.Init(source);
             waveOut.Play();
-            waveOut.PlaybackStopped += WaveOut_PlaybackStopped1;
-            waveOut.PlaybackStopped += AddStopHandler(sender, args, waveOut, source);
+        //     waveOut.PlaybackStopped += WaveOut_PlaybackStopped1;
+        //     waveOut.PlaybackStopped += AddStopHandler(sender, args, waveOut, source);
         }
 
         private void WaveOut_PlaybackStopped1(object sender, StoppedEventArgs e) {
             throw new NotImplementedException();
         }
 
-        void AddStopHandler(object sender, EventArgs e, WaveOutEvent waveOut, BufferedWaveProvider source) {
+        private void AddStopHandler(object sender, EventArgs e, WaveOutEvent waveOut, BufferedWaveProvider source) {
             source.ClearBuffer();
         }
 

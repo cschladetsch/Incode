@@ -37,6 +37,12 @@
   <PropertyGroup>
     <StartupObject>KeyMouse.Program</StartupObject>
   </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>echo Copying to Output Folder
+
+xcopy /y c:\users\christianschladetsch\work\local\repos\Incode\IncodeWindow\bin\Debug\*.* c:\Bin\InCode
+</PostBuildEvent>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="AudioSwitcher.AudioApi.CoreAudio, Version=3.0.0.420, Culture=neutral, PublicKeyToken=fda5729e2db3a64f, processorArchitecture=MSIL">
       <HintPath>..\packages\AudioSwitcher.AudioApi.CoreAudio.3.0.1\lib\net40\AudioSwitcher.AudioApi.CoreAudio.dll</HintPath>
