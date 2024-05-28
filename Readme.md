@@ -11,7 +11,7 @@ Hold an `Interrupt` button - By default the Right-Control key - and then use the
 *NOTE* Use the provided `SharpKeys` binary to remap the CapsLock key to the Right-Control Key. The CapsLock key is an anacronism in any case, may as well put it to good use.
 
 For instance, press and hold the `Interrupt` button, and:
-* use `ESDF` to move the mouse cursor up down left right. Movement is passed through a customised filter to emulate the behavior of an Ibm ThinkPad clit button.  
+* use `WASD` to move the mouse cursor up down left right. Movement is passed through a customised filter to emulate the behavior of an Ibm ThinkPad clit button.  
 * `R` and `V` keys send scroll up and down, again with a custom filter and timings. 
 * The `space bar` simulates the left mouse button
 * `G` the right mouse button.
