@@ -71,7 +71,6 @@ namespace IncodeWindow {
         }
 
         private void AddStopHandler(object sender, EventArgs e, WaveOutEvent waveOut, BufferedWaveProvider source) {
-            source.ClearBuffer();
         }
 
         private void WaveOut_PlaybackStopped(object sender, StoppedEventArgs e) {
